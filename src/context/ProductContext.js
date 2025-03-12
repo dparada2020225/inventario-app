@@ -20,12 +20,13 @@ export const ProductProvider = ({ children }) => {
 
   // Cargar productos desde la API
   const fetchProducts = async () => {
-    setLoading(true);
-    setError(null);
     try {
+      setLoading(true);
       const data = await productService.getAllProducts();
+      console.log('Productos cargados:', data); // Añadir esto
       setProducts(data);
       setFilteredProducts(data);
+      setError(null);
     } catch (err) {
       setError('Error al cargar productos');
       console.error(err);

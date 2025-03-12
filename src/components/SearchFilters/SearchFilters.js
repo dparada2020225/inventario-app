@@ -150,7 +150,7 @@ const SearchFilters = ({ filters, setFilters, categories, colors }) => {
         </FilterItem>
       </FilterSection>
       
-      <Button primary onClick={() => {}}>Buscar</Button>
+      <Button primary="true" onClick={() => {}}>Buscar</Button>
       <Button onClick={resetFilters}>Reiniciar filtros</Button>
     </Container>
   );

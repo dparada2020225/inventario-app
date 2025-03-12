@@ -3,7 +3,11 @@ import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import productService from '../../services/api';
 // Importar utilidades
-import { getColorCode, getColorName } from '../../utils/colorUtils';
+import { getColorCode } from '../../utils/colorUtils';
+import axios from 'axios';
+
+// Cerca del inicio del archivo, verifica que API_URL esté así:
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
 // Componentes estilizados
 const Container = styled.div`
@@ -126,31 +130,6 @@ const Select = styled.select`
   box-sizing: border-box;
 `;
 
-// Función para convertir nombres de colores a códigos HEX
-// const getColorCode = (colorName) => {
-//   if (!colorName) return '#cccccc';
-  
-//   const colorMap = {
-//     'rojo': '#ff0000',
-//     'verde': '#00ff00',
-//     'azul': '#0000ff',
-//     'amarillo': '#ffff00',
-//     'negro': '#000000',
-//     'blanco': '#ffffff',
-//     'gris': '#808080',
-//     'naranja': '#ffa500',
-//     'morado': '#800080',
-//     'rosa': '#ffc0cb',
-//     'marrón': '#a52a2a',
-//     'celeste': '#87ceeb',
-//     'dorado': '#ffd700',
-//     'plateado': '#c0c0c0',
-//     'cromado': '#e8e8e8'
-//   };
-  
-//   return colorMap[colorName.toLowerCase()] || '#cccccc';
-// };
-
 // Componente Dashboard
 const Dashboard = () => {
   // Estado para productos y filtros
@@ -185,20 +164,31 @@ const Dashboard = () => {
   }, [filters, products]);
 
   // Función para cargar productos
-  const fetchProducts = async () => {
-    try {
-      setLoading(true);
-      const data = await productService.getAllProducts();
-      setProducts(data);
-      setFilteredProducts(data);
-      setError(null);
-    } catch (err) {
-      setError('Error al cargar productos');
-      console.error(err);
-    } finally {
-      setLoading(false);
+  // Reemplaza la función fetchProducts con esta versión
+const fetchProducts = async () => {
+  try {
+    setLoading(true);
+    console.log('Solicitando productos desde:', `${API_URL}/api/products`);
+    const data = await productService.getAllProducts();
+    console.log('Productos cargados:', data);
+    
+    // Añadir esto para ver cómo están formateados los IDs de imagen
+    if (data && data.length > 0) {
+      console.log('Ejemplo de producto:', data[0]);
+      console.log('Ejemplo de ID de imagen:', 
+        data[0].image ? `${typeof data[0].image}: ${data[0].image.toString()}` : 'Sin imagen');
     }
-  };
+    
+    setProducts(data);
+    setFilteredProducts(data);
+    setError(null);
+  } catch (err) {
+    console.error('Error al cargar productos completo:', err);
+    setError('Error al cargar productos');
+  } finally {
+    setLoading(false);
+  }
+};
 
   // Función para aplicar filtros
   const applyFilters = () => {
@@ -325,161 +315,188 @@ const Dashboard = () => {
   const categories = [...new Set(products.map(p => p.category))].filter(Boolean);
   const colors = [...new Set(products.map(p => p.color))].filter(Boolean);
 
-// Componente de filtros de búsqueda
-const SearchFilters = () => {
-  // Crear estado local para los inputs para evitar re-renders excesivos
-  const [localFilters, setLocalFilters] = useState({...filters});
+  // Componente de filtros de búsqueda
+  const SearchFilters = () => {
+    // Crear estado local para los inputs para evitar re-renders excesivos
+    const [localFilters, setLocalFilters] = useState({...filters});
 
-  // Manejar cambios en los inputs sin aplicar los filtros inmediatamente
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setLocalFilters(prev => ({...prev, [name]: value}));
-  };
-
-  // Aplicar los filtros cuando se hace clic en el botón Buscar
-  const handleSearch = () => {
-    setFilters(localFilters);
-  };
-
-  // Reiniciar filtros
-  const handleReset = () => {
-    const emptyFilters = {
-      searchTerm: '',
-      category: '',
-      color: '',
-      minPrice: '',
-      maxPrice: ''
+    // Manejar cambios en los inputs sin aplicar los filtros inmediatamente
+    const handleInputChange = (e) => {
+      const { name, value } = e.target;
+      setLocalFilters(prev => ({...prev, [name]: value}));
     };
-    setLocalFilters(emptyFilters);
-    setFilters(emptyFilters);
+
+    // Aplicar los filtros cuando se hace clic en el botón Buscar
+    const handleSearch = () => {
+      setFilters(localFilters);
+    };
+
+    // Reiniciar filtros
+    const handleReset = () => {
+      const emptyFilters = {
+        searchTerm: '',
+        category: '',
+        color: '',
+        minPrice: '',
+        maxPrice: ''
+      };
+      setLocalFilters(emptyFilters);
+      setFilters(emptyFilters);
+    };
+
+    return (
+      <SearchContainer>
+        <FilterSection>
+          <FilterItem>
+            <Label htmlFor="searchTerm">Buscar por nombre:</Label>
+            <Input
+              type="text"
+              id="searchTerm"
+              name="searchTerm"
+              value={localFilters.searchTerm}
+              onChange={handleInputChange}
+              placeholder="Escribe para buscar..."
+            />
+          </FilterItem>
+          
+          <FilterItem>
+            <Label htmlFor="category">Categoría:</Label>
+            <Select
+              id="category"
+              name="category"
+              value={localFilters.category}
+              onChange={handleInputChange}
+            >
+              <option value="">Todas las categorías</option>
+              {categories.map(category => (
+                <option key={category} value={category}>{category}</option>
+              ))}
+            </Select>
+          </FilterItem>
+          
+          <FilterItem>
+            <Label htmlFor="color">Color:</Label>
+            <Select
+              id="color"
+              name="color"
+              value={localFilters.color}
+              onChange={handleInputChange}
+            >
+              <option value="">Todos los colores</option>
+              {colors.map(color => (
+                <option key={color} value={color}>{color}</option>
+              ))}
+            </Select>
+          </FilterItem>
+        </FilterSection>
+        
+        <FilterSection>
+          <FilterItem>
+            <Label htmlFor="minPrice">Precio mínimo:</Label>
+            <Input
+              type="number"
+              id="minPrice"
+              name="minPrice"
+              value={localFilters.minPrice}
+              onChange={handleInputChange}
+              placeholder="Mínimo"
+            />
+          </FilterItem>
+          
+          <FilterItem>
+            <Label htmlFor="maxPrice">Precio máximo:</Label>
+            <Input
+              type="number"
+              id="maxPrice"
+              name="maxPrice"
+              value={localFilters.maxPrice}
+              onChange={handleInputChange}
+              placeholder="Máximo"
+            />
+          </FilterItem>
+        </FilterSection>
+        
+        <Button primary="true" onClick={handleSearch}>Buscar</Button>
+        <Button onClick={handleReset} style={{marginLeft: '10px', backgroundColor: '#f44336'}}>
+          Reiniciar filtros
+        </Button>
+      </SearchContainer>
+    );
+  };
+
+  // Renderizar tarjeta de producto
+const renderProductCard = (product) => {
+  // Función para manejar errores de imagen de manera limpia
+  const handleImageError = (e) => {
+    console.error(`Error cargando imagen para ${product.name}:`, e);
+    e.target.style.display = 'none';
+    const container = e.target.parentNode;
+    // Limpiar el contenedor
+    while (container.firstChild) {
+      container.removeChild(container.firstChild);
+    }
+    // Crear un placeholder
+    const placeholder = document.createElement('div');
+    placeholder.style.fontSize = '24px';
+    placeholder.style.color = '#ccc';
+    placeholder.style.display = 'flex';
+    placeholder.style.justifyContent = 'center';
+    placeholder.style.alignItems = 'center';
+    placeholder.style.width = '100%';
+    placeholder.style.height = '100%';
+    placeholder.textContent = product.name.charAt(0).toUpperCase();
+    container.appendChild(placeholder);
   };
 
   return (
-    <SearchContainer>
-      <FilterSection>
-        <FilterItem>
-          <Label htmlFor="searchTerm">Buscar por nombre:</Label>
-          <Input
-            type="text"
-            id="searchTerm"
-            name="searchTerm"
-            value={localFilters.searchTerm}
-            onChange={handleInputChange}
-            placeholder="Escribe para buscar..."
-          />
-        </FilterItem>
-        
-        <FilterItem>
-          <Label htmlFor="category">Categoría:</Label>
-          <Select
-            id="category"
-            name="category"
-            value={localFilters.category}
-            onChange={handleInputChange}
-          >
-            <option value="">Todas las categorías</option>
-            {categories.map(category => (
-              <option key={category} value={category}>{category}</option>
-            ))}
-          </Select>
-        </FilterItem>
-        
-        <FilterItem>
-          <Label htmlFor="color">Color:</Label>
-          <Select
-            id="color"
-            name="color"
-            value={localFilters.color}
-            onChange={handleInputChange}
-          >
-            <option value="">Todos los colores</option>
-            {colors.map(color => (
-              <option key={color} value={color}>{color}</option>
-            ))}
-          </Select>
-        </FilterItem>
-      </FilterSection>
-      
-      <FilterSection>
-        <FilterItem>
-          <Label htmlFor="minPrice">Precio mínimo:</Label>
-          <Input
-            type="number"
-            id="minPrice"
-            name="minPrice"
-            value={localFilters.minPrice}
-            onChange={handleInputChange}
-            placeholder="Mínimo"
-          />
-        </FilterItem>
-        
-        <FilterItem>
-          <Label htmlFor="maxPrice">Precio máximo:</Label>
-          <Input
-            type="number"
-            id="maxPrice"
-            name="maxPrice"
-            value={localFilters.maxPrice}
-            onChange={handleInputChange}
-            placeholder="Máximo"
-          />
-        </FilterItem>
-      </FilterSection>
-      
-      <Button primary onClick={handleSearch}>Buscar</Button>
-      <Button onClick={handleReset} style={{marginLeft: '10px', backgroundColor: '#f44336'}}>
-        Reiniciar filtros
-      </Button>
-    </SearchContainer>
-  );
-};
-
-  // Renderizar tarjeta de producto
-  const renderProductCard = (product) => {
-    return (
-      <div key={product._id} style={{
-        backgroundColor: 'white',
-        borderRadius: '8px',
-        boxShadow: '0 2px 5px rgba(0,0,0,0.1)',
-        padding: '15px',
-        marginBottom: '20px'
+    <div key={product._id} style={{
+      backgroundColor: 'white',
+      borderRadius: '8px',
+      boxShadow: '0 2px 5px rgba(0,0,0,0.1)',
+      padding: '15px',
+      marginBottom: '20px'
+    }}>
+      <div style={{
+        height: '150px',
+        backgroundColor: '#f5f5f5',
+        borderRadius: '4px',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginBottom: '10px'
       }}>
-        <div style={{
-          height: '150px',
-          backgroundColor: '#f5f5f5',
-          borderRadius: '4px',
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          marginBottom: '10px'
-        }}>
-          {product.image ? (
+        {product.image ? (
+          <>
+            {console.log('URL de imagen:', `${API_URL}/images/${product.image}`)}
             <img
-              src={product.image}
+              src={`${API_URL}/images/${product.image}`}
               alt={product.name}
               style={{
                 maxWidth: '100%',
                 maxHeight: '100%',
                 objectFit: 'contain'
               }}
-              onError={(e) => {
-                e.target.style.display = 'none';
-                e.target.parentNode.innerHTML = product.name.charAt(0).toUpperCase();
-              }}
+              onError={handleImageError}
             />
-          ) : (
-            <div style={{
-              fontSize: '24px',
-              color: '#ccc'
-            }}>
-              {product.name.charAt(0).toUpperCase()}
-            </div>
-          )}
-        </div>
-        
-        <h3 style={{ margin: '0 0 10px 0', fontSize: '18px' }}>{product.name}</h3>
-        <p style={{ margin: '5px 0', color: '#666', fontSize: '14px' }}>Categoría: {product.category}</p>
-        <p style={{ margin: '5px 0', color: '#666', fontSize: '14px', display: 'flex', alignItems: 'center' }}>
+          </>
+        ) : (
+          <div style={{
+            fontSize: '24px',
+            color: '#ccc',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            width: '100%',
+            height: '100%'
+          }}>
+            {product.name.charAt(0).toUpperCase()}
+          </div>
+        )}
+      </div>
+      
+      <h3 style={{ margin: '0 0 10px 0', fontSize: '18px' }}>{product.name}</h3>
+      <p style={{ margin: '5px 0', color: '#666', fontSize: '14px' }}>Categoría: {product.category}</p>
+      <p style={{ margin: '5px 0', color: '#666', fontSize: '14px', display: 'flex', alignItems: 'center' }}>
         <span style={{ 
           display: 'inline-block',
           width: '14px',
@@ -491,39 +508,39 @@ const SearchFilters = () => {
         }}></span>
         Color: {product.color}
       </p>
-        <p style={{ margin: '10px 0', fontWeight: 'bold', color: '#e91e63' }}>
-          Precio: ${parseFloat(product.price).toFixed(2)}
-        </p>
-        
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '15px' }}>
-          <button 
-            onClick={() => handleEditProduct(product)}
-            style={{
-              backgroundColor: '#2196F3',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              padding: '6px 12px',
-              cursor: 'pointer'
-            }}>
-            Editar
-          </button>
-          <button 
-            onClick={() => handleDeleteClick(product._id)}
-            style={{
-              backgroundColor: '#f44336',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              padding: '6px 12px',
-              cursor: 'pointer'
-            }}>
-            Eliminar
-          </button>
-        </div>
+      <p style={{ margin: '10px 0', fontWeight: 'bold', color: '#e91e63' }}>
+        Precio: ${parseFloat(product.price).toFixed(2)}
+      </p>
+      
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '15px' }}>
+        <button 
+          onClick={() => handleEditProduct(product)}
+          style={{
+            backgroundColor: '#2196F3',
+            color: 'white',
+            border: 'none',
+            borderRadius: '4px',
+            padding: '6px 12px',
+            cursor: 'pointer'
+          }}>
+          Editar
+        </button>
+        <button 
+          onClick={() => handleDeleteClick(product._id)}
+          style={{
+            backgroundColor: '#f44336',
+            color: 'white',
+            border: 'none',
+            borderRadius: '4px',
+            padding: '6px 12px',
+            cursor: 'pointer'
+          }}>
+          Eliminar
+        </button>
       </div>
-    );
-  };
+    </div>
+  );
+};
 
   // Componente Modal
   const Modal = ({ isOpen, title, onClose, children }) => {
@@ -567,17 +584,82 @@ const SearchFilters = () => {
       category: product?.category || '',
       color: product?.color || '',
       price: product?.price || '',
-      image: product?.image || ''
+      image: product?.image || null
     });
+    
+    const [selectedFile, setSelectedFile] = useState(null);
+    const [previewUrl, setPreviewUrl] = useState('');
+    const [error, setError] = useState('');
+    const [loading, setLoading] = useState(false);
+
+    useEffect(() => {
+      if (product && product.image) {
+        setPreviewUrl(`${API_URL}/images/${product.image}`);
+      }
+    }, [product]);
 
     const handleChange = (e) => {
       const { name, value } = e.target;
       setFormData(prev => ({...prev, [name]: value}));
     };
 
-    const handleSubmit = (e) => {
+    const handleFileChange = (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        // Validar tipo y tamaño
+        const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/jpg'];
+        if (!validTypes.includes(file.type)) {
+          setError('Por favor selecciona una imagen válida (JPEG, PNG o GIF)');
+          return;
+        }
+        
+        if (file.size > 5 * 1024 * 1024) {
+          setError('La imagen debe ser menor a 5MB');
+          return;
+        }
+        
+        setError('');
+        setSelectedFile(file);
+        
+        // Crear URL para vista previa
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setPreviewUrl(reader.result);
+        };
+        reader.readAsDataURL(file);
+      }
+    };
+
+    const handleSubmit = async (e) => {
       e.preventDefault();
-      onSave({...formData, price: parseFloat(formData.price)});
+      setLoading(true);
+      
+      try {
+        let imageId = formData.image;
+        
+        // Si hay un archivo seleccionado, subirlo primero
+        if (selectedFile) {
+          const formDataFile = new FormData();
+          formDataFile.append('image', selectedFile);
+          
+          const uploadResponse = await axios.post(`${API_URL}/upload`, formDataFile);
+          imageId = uploadResponse.data.imageId;
+        }
+        
+        // Después guardar el producto con la referencia a la imagen
+        const productData = {
+          ...formData,
+          price: parseFloat(formData.price),
+          image: imageId
+        };
+        
+        onSave(productData);
+      } catch (error) {
+        console.error('Error al guardar producto:', error);
+        setError('Error al guardar producto. Inténtalo de nuevo.');
+      } finally {
+        setLoading(false);
+      }
     };
 
     return (
@@ -635,22 +717,56 @@ const SearchFilters = () => {
         </div>
         
         <div style={{marginBottom: '15px'}}>
-          <label style={{display: 'block', marginBottom: '5px'}}>URL de Imagen:</label>
+          <label style={{display: 'block', marginBottom: '5px'}}>Imagen:</label>
           <input 
-            type="text" 
+            type="file" 
             name="image" 
-            value={formData.image} 
-            onChange={handleChange}
+            accept="image/*"
+            onChange={handleFileChange}
             style={{width: '100%', padding: '8px'}}
-            placeholder="https://..."
           />
+          
+          {error && <div style={{color: 'red', fontSize: '0.8rem', marginTop: '5px'}}>{error}</div>}
+          
+          {previewUrl && (
+            <div style={{marginTop: '10px', maxWidth: '200px'}}>
+              <img 
+                src={previewUrl} 
+                alt="Vista previa" 
+                style={{maxWidth: '100%', maxHeight: '150px', borderRadius: '4px'}}
+              />
+            </div>
+          )}
+          
+          {formData.image && !selectedFile && !previewUrl && (
+            <div style={{marginTop: '5px', color: '#666', fontSize: '0.9rem'}}>
+              Imagen actual guardada. Sube una nueva para reemplazarla.
+            </div>
+          )}
         </div>
         
         <div style={{display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '20px'}}>
-          <button type="submit" style={{backgroundColor: '#4CAF50', color: 'white', border: 'none', padding: '10px 15px', borderRadius: '4px'}}>
-            Guardar
+          <button 
+            type="submit" 
+            style={{
+              backgroundColor: '#4CAF50', 
+              color: 'white', 
+              border: 'none', 
+              padding: '10px 15px', 
+              borderRadius: '4px',
+              cursor: loading ? 'not-allowed' : 'pointer',
+              opacity: loading ? 0.7 : 1
+            }}
+            disabled={loading}
+          >
+            {loading ? 'Guardando...' : 'Guardar'}
           </button>
-          <button type="button" onClick={onCancel} style={{backgroundColor: '#607d8b', color: 'white', border: 'none', padding: '10px 15px', borderRadius: '4px'}}>
+          <button 
+            type="button" 
+            onClick={onCancel} 
+            style={{backgroundColor: '#607d8b', color: 'white', border: 'none', padding: '10px 15px', borderRadius: '4px'}}
+            disabled={loading}
+          >
             Cancelar
           </button>
         </div>
@@ -709,7 +825,7 @@ const SearchFilters = () => {
       </Header>
       
       <ActionsContainer>
-        <Button primary onClick={handleCreateProduct}>
+        <Button primary="true" onClick={handleCreateProduct}>
           Crear Nuevo Producto
         </Button>
         <Button onClick={handleExportToCSV}>

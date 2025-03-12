@@ -1,13 +1,13 @@
 // src/services/api.js
 import axios from 'axios';
 
-const API_URL = 'http://localhost:5000/api';
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
 export const productService = {
   // Obtener todos los productos
   getAllProducts: async () => {
     try {
-      const response = await axios.get(`${API_URL}/products`);
+      const response = await axios.get(`${API_URL}/api/products`);
       return response.data;
     } catch (error) {
       console.error('Error fetching products:', error);
@@ -18,7 +18,7 @@ export const productService = {
   // Crear un nuevo producto
   createProduct: async (productData) => {
     try {
-      const response = await axios.post(`${API_URL}/products`, productData);
+      const response = await axios.post(`${API_URL}/api/products`, productData);
       return response.data;
     } catch (error) {
       console.error('Error creating product:', error);
@@ -29,7 +29,7 @@ export const productService = {
   // Actualizar un producto existente
   updateProduct: async (id, productData) => {
     try {
-      const response = await axios.put(`${API_URL}/products/${id}`, productData);
+      const response = await axios.put(`${API_URL}/api/products/${id}`, productData);
       return response.data;
     } catch (error) {
       console.error('Error updating product:', error);
@@ -40,7 +40,7 @@ export const productService = {
   // Eliminar un producto
   deleteProduct: async (id) => {
     try {
-      await axios.delete(`${API_URL}/products/${id}`);
+      await axios.delete(`${API_URL}/api/products/${id}`);
       return true;
     } catch (error) {
       console.error('Error deleting product:', error);
@@ -51,7 +51,7 @@ export const productService = {
   // Exportar a CSV
   exportToCSV: async () => {
     try {
-      const response = await axios.get(`${API_URL}/products/export-csv`, {
+      const response = await axios.get(`${API_URL}/api/products/export-csv`, {
         responseType: 'blob'
       });
       
@@ -67,6 +67,25 @@ export const productService = {
       return true;
     } catch (error) {
       console.error('Error exporting to CSV:', error);
+      throw error;
+    }
+  },
+  
+  // Subir imagen
+  uploadImage: async (file) => {
+    try {
+      const formData = new FormData();
+      formData.append('image', file);
+      
+      const response = await axios.post(`${API_URL}/upload`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+      
+      return response.data;
+    } catch (error) {
+      console.error('Error uploading image:', error);
       throw error;
     }
   }
