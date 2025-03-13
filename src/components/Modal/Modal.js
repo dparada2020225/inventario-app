@@ -1,6 +1,16 @@
 // src/components/Modal/Modal.js
 import React, { useEffect } from 'react';
-import styled from 'styled-components';
+import styled, { keyframes } from 'styled-components';
+
+const fadeIn = keyframes`
+  from { opacity: 0; }
+  to { opacity: 1; }
+`;
+
+const slideIn = keyframes`
+  from { transform: translateY(-20px); }
+  to { transform: translateY(0); }
+`;
 
 const ModalOverlay = styled.div`
   position: fixed;
@@ -12,24 +22,46 @@ const ModalOverlay = styled.div`
   background-color: rgba(0, 0, 0, 0.5);
   display: flex;
   justify-content: center;
-  align-items: flex-start;
-  padding-top: 5%;
-  animation: fadeIn 0.3s;
-  
-  @keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
-  }
+  align-items: center;
+  animation: ${fadeIn} 0.3s ease;
+  padding: 20px;
+  box-sizing: border-box;
+  overflow-y: auto;
 `;
 
 const ModalContent = styled.div`
   background-color: white;
   padding: 25px;
-  width: 80%;
-  max-width: 600px;
+  width: 95%;
+  max-width: 550px;
+  max-height: 90vh;
+  overflow-y: auto;
   border-radius: 8px;
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
   position: relative;
+  animation: ${slideIn} 0.3s ease;
+  
+  /* Añadir padding al final para que los botones sean visibles */
+  padding-bottom: 80px;
+  
+  /* Añadir scrollbar más estilizada */
+  &::-webkit-scrollbar {
+    width: 8px;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 4px;
+  }
+  
+  &::-webkit-scrollbar-thumb:hover {
+    background: #555;
+  }
 `;
 
 const ModalHeader = styled.div`
@@ -37,11 +69,17 @@ const ModalHeader = styled.div`
   justify-content: space-between;
   align-items: center;
   margin-bottom: 20px;
+  position: sticky;
+  top: 0;
+  background: white;
+  padding: 5px 0;
+  z-index: 1;
 `;
 
 const ModalTitle = styled.h2`
   margin: 0;
   color: #333;
+  font-size: 1.5rem;
 `;
 
 const CloseButton = styled.span`
@@ -85,7 +123,7 @@ const Modal = ({ isOpen, title, onClose, children }) => {
 
   return (
     <ModalOverlay onClick={handleOverlayClick}>
-      <ModalContent>
+      <ModalContent onClick={e => e.stopPropagation()}>
         <ModalHeader>
           <ModalTitle>{title}</ModalTitle>
           <CloseButton onClick={onClose}>&times;</CloseButton>

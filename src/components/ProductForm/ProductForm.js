@@ -22,12 +22,8 @@ const Form = styled.form`
 `;
 
 const FormGroup = styled.div`
-  margin-bottom: 15px;
+  margin-bottom: 12px;  // Reducido desde 15px
   transition: all 0.2s ease;
-  
-  &:focus-within {
-    transform: translateY(-2px);
-  }
 `;
 
 const Label = styled.label`
@@ -39,19 +35,17 @@ const Label = styled.label`
 
 const Input = styled.input`
   width: 100%;
-  padding: 10px;
+  padding: 8px;  // Reducido desde 10px
   border: 1px solid #ddd;
   border-radius: 6px;
   box-sizing: border-box;
-  transition: all 0.2s ease;
   
   &:focus {
     border-color: ${props => props.theme.colors.primary};
     outline: none;
-    box-shadow: 0 0 0 3px rgba(150, 255, 0, 0.2);
+    box-shadow: 0 0 0 2px rgba(150, 255, 0, 0.2);
   }
 `;
-
 const ErrorMessage = styled.div`
   color: ${props => props.theme.colors.danger};
   font-size: 0.8rem;
@@ -87,13 +81,13 @@ const FileInputLabel = styled.label`
 const FileInputContainer = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
   margin-bottom: 8px;
 `;
 
 const CustomFileButton = styled.label`
   display: inline-block;
-  padding: 10px 16px;
+  padding: 8px 14px;
   background-color: ${props => props.theme.colors.primary};
   color: ${props => props.theme.colors.secondary};
   border-radius: 6px;
@@ -108,33 +102,23 @@ const CustomFileButton = styled.label`
     transform: translateY(-2px);
     box-shadow: ${props => props.theme.shadows.medium};
   }
-  
-  &:active {
-    transform: translateY(1px);
-  }
 `;
 
 const FileDisplay = styled.div`
-  padding: 10px;
-  background-color: #f8f8f8;
-  border: 1px solid #ddd;
-  border-radius: 6px;
-  font-size: 14px;
-  color: #666;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  position: relative;
-  padding-left: 28px;
-  
-  &::before {
-    content: "📄";
-    position: absolute;
-    left: 10px;
-    top: 50%;
-    transform: translateY(-50%);
-    opacity: 0.7;
-  }
+padding: 8px;
+background-color: #f8f8f8;
+border: 1px solid #ddd;
+border-radius: 6px;
+font-size: 12px;
+color: #666;
+overflow: hidden;
+text-overflow: ellipsis;
+white-space: nowrap;
+
+&::before {
+  content: "📄";
+  margin-right: 5px;
+}
 `;
 
 const HiddenInput = styled.input`
@@ -145,18 +129,12 @@ const HiddenInput = styled.input`
 `;
 
 const ImagePreview = styled.div`
-  margin-top: 15px;
+  margin-top: 10px;
   width: 100%;
-  max-width: 250px;
+  max-width: 150px;
   border-radius: 8px;
   overflow: hidden;
-  box-shadow: 0 3px 15px rgba(0,0,0,0.1);
-  transition: all 0.3s ease;
-  
-  &:hover {
-    transform: scale(1.03);
-    box-shadow: 0 5px 20px rgba(0,0,0,0.15);
-  }
+  box-shadow: 0 3px 10px rgba(0,0,0,0.1);
   
   img {
     width: 100%;
@@ -168,12 +146,17 @@ const ImagePreview = styled.div`
 const ButtonContainer = styled.div`
   display: flex;
   gap: 12px;
-  margin-top: 20px;
+  margin-top: 25px;
   justify-content: flex-end;
+  position: sticky;
+  bottom: 0;
+  background: white;
+  padding: 15px 0 5px 0;
+  z-index: 1;
 `;
 
 const ActionButton = styled.button`
-  padding: 12px 24px;
+  padding: 10px 18px;  // Reducido desde 12px 24px
   border-radius: 6px;
   font-weight: 600;
   cursor: pointer;
@@ -184,21 +167,6 @@ const ActionButton = styled.button`
   &:hover {
     transform: translateY(-2px);
     box-shadow: ${props => props.theme.shadows.medium};
-  }
-  
-  &:active {
-    transform: translateY(1px);
-  }
-  
-  &:focus {
-    outline: none;
-    box-shadow: 0 0 0 3px rgba(150, 255, 0, 0.3);
-  }
-  
-  &:disabled {
-    opacity: 0.7;
-    cursor: not-allowed;
-    transform: none;
   }
 `;
 
