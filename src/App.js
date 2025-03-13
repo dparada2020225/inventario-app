@@ -3,6 +3,7 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { createGlobalStyle, ThemeProvider } from 'styled-components';
 import Dashboard from './pages/Dashboard/Dashboard';
+import Header from './components/Header/Header'; // Importar el componente Header
 import { theme } from './theme';
 
 const GlobalStyle = createGlobalStyle`
@@ -22,38 +23,12 @@ const GlobalStyle = createGlobalStyle`
   }
 `;
 
-// Componente Header temporal simplificado
-const Header = () => (
-  <header style={{
-    backgroundColor: theme.colors.secondary,
-    color: 'white',
-    padding: '15px 0',
-    boxShadow: theme.shadows.small
-  }}>
-    <div style={{
-      maxWidth: '1200px',
-      margin: '0 auto',
-      padding: '0 20px',
-      display: 'flex',
-      justifyContent: 'space-between',
-      alignItems: 'center'
-    }}>
-      <h1 style={{margin: 0, fontSize: '1.5rem'}}>
-        <img src="/logotipo.png" alt="Reconstructora Antigua Jr." style={{ height: '35px' }} />
-      </h1>
-      <nav>
-        <a href="/" style={{color: theme.colors.primary, textDecoration: 'none', marginLeft: '20px'}}>Inicio</a>
-      </nav>
-    </div>
-  </header>
-);
-
 function App() {
   return (
     <ThemeProvider theme={theme}>
       <Router>
         <GlobalStyle />
-        <Header />
+        <Header /> {/* Usar el componente Header externo */}
         <Routes>
           <Route path="/" element={<Dashboard />} />
           <Route path="*" element={<div style={{padding: '40px', textAlign: 'center'}}>Página no encontrada</div>} />

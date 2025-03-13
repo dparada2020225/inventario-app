@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import styled from 'styled-components';
 import { getColorCode } from '../../utils/colorUtils';
+import ImageViewer from '../ImageViewer/ImageViewer';
 
 const Card = styled.div`
   background-color: ${props => props.theme.colors.cardBackground};
@@ -10,6 +11,7 @@ const Card = styled.div`
   box-shadow: ${props => props.theme.shadows.small};
   transition: transform 0.2s, box-shadow 0.2s;
   border-top: 3px solid ${props => props.theme.colors.primary};
+  position: relative;
   
   &:hover {
     transform: translateY(-5px);
@@ -26,6 +28,12 @@ const ImageContainer = styled.div`
   background-color: #f9f9f9;
   border-radius: 4px;
   overflow: hidden;
+  cursor: zoom-in;
+  transition: transform 0.2s;
+  
+  &:hover {
+    transform: scale(1.03);
+  }
 `;
 
 const Placeholder = styled.div`
@@ -104,47 +112,66 @@ const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
 const ProductCard = ({ product, onEdit, onDelete }) => {
   const [imageError, setImageError] = useState(false);
+  const [isViewerOpen, setIsViewerOpen] = useState(false);
 
   const handleImageError = () => {
     setImageError(true);
   };
 
+  const handleImageClick = () => {
+    if (!imageError && product.image) {
+      setIsViewerOpen(true);
+    }
+  };
+
+  const fullImageUrl = `${API_URL}/images/${product.image}`;
+
   return (
-    <Card>
-      <ImageContainer>
-        {!imageError && product.image ? (
-          <ProductImage 
-            src={`${API_URL}/images/${product.image}`}
-            alt={product.name}
-            onError={handleImageError}
-          />
-        ) : (
-          <Placeholder>
-            {product.name.charAt(0).toUpperCase()}
-          </Placeholder>
-        )}
-      </ImageContainer>
-      
-      <ProductName>{product.name}</ProductName>
-      <ProductDetail>Categoría: {product.category}</ProductDetail>
-      <ProductDetail>
-        <ColorDot color={getColorCode(product.color)} />
-        Color: {product.color}
-      </ProductDetail>
-      
-      <ProductPrice>
-        Precio: ${parseFloat(product.price).toFixed(2)}
-      </ProductPrice>
-      
-      <ButtonContainer>
-        <Button onClick={() => onEdit(product)}>
-          Editar
-        </Button>
-        <Button danger onClick={() => onDelete(product._id)}>
-          Eliminar
-        </Button>
-      </ButtonContainer>
-    </Card>
+    <>
+      <Card>
+        <ImageContainer onClick={handleImageClick}>
+          {!imageError && product.image ? (
+            <ProductImage 
+              src={fullImageUrl}
+              alt={product.name}
+              onError={handleImageError}
+            />
+          ) : (
+            <Placeholder>
+              {product.name.charAt(0).toUpperCase()}
+            </Placeholder>
+          )}
+        </ImageContainer>
+        
+        <ProductName>{product.name}</ProductName>
+        <ProductDetail>Categoría: {product.category}</ProductDetail>
+        <ProductDetail>
+          <ColorDot color={getColorCode(product.color)} />
+          Color: {product.color}
+        </ProductDetail>
+        
+        <ProductPrice>
+          Precio: Q {parseFloat(product.price).toFixed(2)}
+        </ProductPrice>
+        
+        <ButtonContainer>
+          <Button onClick={() => onEdit(product)}>
+            Editar
+          </Button>
+          <Button danger onClick={() => onDelete(product._id)}>
+            Eliminar
+          </Button>
+        </ButtonContainer>
+      </Card>
+
+      {/* Visor de imágenes con el nombre del producto como título */}
+      <ImageViewer 
+        isOpen={isViewerOpen}
+        image={fullImageUrl}
+        altText={product.name}
+        onClose={() => setIsViewerOpen(false)}
+      />
+    </>
   );
 };
 

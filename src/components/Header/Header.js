@@ -6,7 +6,7 @@ import { Link } from 'react-router-dom';
 const HeaderContainer = styled.header`
   background-color: ${props => props.theme.colors.secondary};
   color: white;
-  padding: 15px 0;
+  padding: 8px 0;  /* Reducido de 15px a 8px */
   box-shadow: ${props => props.theme.shadows.small};
 `;
 
@@ -26,19 +26,19 @@ const Logo = styled(Link)`
 `;
 
 const LogoImage = styled.img`
-  height: 38px; // Ajusta la altura según necesites
+  height: 42px; /* Reducido de 38px a 30px */
   display: block;
 `;
 
 const Nav = styled.nav`
   display: flex;
-  gap: 20px;
+  gap: 15px; /* Reducido de 20px a 15px */
 `;
 
 const NavLink = styled(Link)`
   color: ${props => props.theme.colors.primary};
   text-decoration: none;
-  padding: 6px 12px;
+  padding: 4px 10px; /* Reducido de 6px 12px a 4px 10px */
   border-radius: 4px;
   font-weight: 500;
   transition: all 0.2s ease;
@@ -54,7 +54,7 @@ const Header = () => {
     <HeaderContainer>
       <Content>
         <Logo to="/">
-          <LogoImage src="/logotipoPng.png" alt="Reconstructora Antigua Jr." />
+          <LogoImage src="/logotipoPng2.png" alt="Reconstructora Antigua Jr." />
         </Logo>
         <Nav>
           <NavLink to="/">Productos</NavLink>
