@@ -25,6 +25,11 @@ const Logo = styled(Link)`
   align-items: center;
 `;
 
+const LogoImage = styled.img`
+  height: 38px; // Ajusta la altura según necesites
+  display: block;
+`;
+
 const Nav = styled.nav`
   display: flex;
   gap: 20px;
@@ -49,7 +54,7 @@ const Header = () => {
     <HeaderContainer>
       <Content>
         <Logo to="/">
-          <img src="/logotipo.png" alt="Reconstructora Antigua Jr." style={{ height: '35px' }} />
+          <LogoImage src="/logotipoPng.png" alt="Reconstructora Antigua Jr." />
         </Logo>
         <Nav>
           <NavLink to="/">Productos</NavLink>

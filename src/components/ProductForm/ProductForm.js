@@ -129,30 +129,33 @@ const HiddenInput = styled.input`
 `;
 
 const ImagePreview = styled.div`
-  margin-top: 10px;
+  margin: 15px auto;
   width: 100%;
-  max-width: 150px;
+  max-width: 300px; // Aumentar el tamaño (era 150px)
   border-radius: 8px;
   overflow: hidden;
-  box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+  box-shadow: 0 3px 15px rgba(0,0,0,0.1);
   
   img {
     width: 100%;
     height: auto;
     display: block;
+    max-height: 300px; // Altura máxima controlada
+    object-fit: contain;
   }
 `;
 
 const ButtonContainer = styled.div`
   display: flex;
   gap: 12px;
-  margin-top: 25px;
   justify-content: flex-end;
   position: sticky;
   bottom: 0;
   background: white;
   padding: 15px 0 5px 0;
-  z-index: 1;
+  margin-top: 25px;
+  border-top: 1px solid #eee;
+  z-index: 2;
 `;
 
 const ActionButton = styled.button`

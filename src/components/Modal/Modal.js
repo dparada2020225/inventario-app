@@ -22,10 +22,9 @@ const ModalOverlay = styled.div`
   background-color: rgba(0, 0, 0, 0.5);
   display: flex;
   justify-content: center;
-  align-items: center;
+  align-items: flex-start; // Cambiar de center a flex-start
+  padding: 30px 20px; // Añadir más padding en la parte superior
   animation: ${fadeIn} 0.3s ease;
-  padding: 20px;
-  box-sizing: border-box;
   overflow-y: auto;
 `;
 
@@ -34,17 +33,15 @@ const ModalContent = styled.div`
   padding: 25px;
   width: 95%;
   max-width: 550px;
-  max-height: 90vh;
-  overflow-y: auto;
+  max-height: 85vh;
   border-radius: 8px;
   box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
   position: relative;
   animation: ${slideIn} 0.3s ease;
+  display: flex;
+  flex-direction: column;
   
-  /* Añadir padding al final para que los botones sean visibles */
-  padding-bottom: 80px;
-  
-  /* Añadir scrollbar más estilizada */
+  /* Mejorar scrollbar */
   &::-webkit-scrollbar {
     width: 8px;
   }
@@ -58,10 +55,6 @@ const ModalContent = styled.div`
     background: #888;
     border-radius: 4px;
   }
-  
-  &::-webkit-scrollbar-thumb:hover {
-    background: #555;
-  }
 `;
 
 const ModalHeader = styled.div`
@@ -72,10 +65,16 @@ const ModalHeader = styled.div`
   position: sticky;
   top: 0;
   background: white;
-  padding: 5px 0;
-  z-index: 1;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #eee;
+  z-index: 2;
 `;
 
+const ModalBody = styled.div`
+  overflow-y: auto;
+  flex-grow: 1;
+  padding-right: 5px;
+`;
 const ModalTitle = styled.h2`
   margin: 0;
   color: #333;
@@ -123,12 +122,14 @@ const Modal = ({ isOpen, title, onClose, children }) => {
 
   return (
     <ModalOverlay onClick={handleOverlayClick}>
-      <ModalContent onClick={e => e.stopPropagation()}>
+      <ModalContent>
         <ModalHeader>
           <ModalTitle>{title}</ModalTitle>
           <CloseButton onClick={onClose}>&times;</CloseButton>
         </ModalHeader>
-        {children}
+        <ModalBody>
+          {children}
+        </ModalBody>
       </ModalContent>
     </ModalOverlay>
   );
