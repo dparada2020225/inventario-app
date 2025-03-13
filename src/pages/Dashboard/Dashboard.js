@@ -1,13 +1,13 @@
 // src/pages/Dashboard/Dashboard.js
 import React, { useState, useEffect } from 'react';
-import styled from 'styled-components';
+// import styled from 'styled-components';
 import productService from '../../services/api';
-// Importar utilidades
 import { getColorCode } from '../../utils/colorUtils';
 import axios from 'axios';
-
-// Cerca del inicio del archivo, verifica que API_URL esté así:
+import styled, { keyframes } from 'styled-components';
+// Definición de la URL de la API
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+
 
 // Componentes estilizados
 const Container = styled.div`
@@ -16,14 +16,76 @@ const Container = styled.div`
   padding: 20px;
 `;
 
-const Header = styled.header`
+// Añade esta definición aquí
+const ProductCard = styled.div`
+  background-color: white;
+  border-radius: 10px;
+  box-shadow: 0 3px 12px rgba(0,0,0,0.08);
+  padding: 18px;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 4px;
+    background-color: ${props => props.theme.colors.primary};
+  }
+  
+  &:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.12);
+  }
+`;
+
+const DashboardHeader = styled.header`
   margin-bottom: 30px;
   text-align: center;
 `;
+const textShine = keyframes`
+  0% {
+    background-position: 0% 50%;
+  }
+  100% {
+    background-position: 100% 50%;
+  }
+`;
 
 const Title = styled.h1`
-  color: #333;
-  margin-bottom: 10px;
+  color: ${props => props.theme.colors.text};
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin-bottom: 20px;
+  position: relative;
+  display: inline-block;
+  
+  &:after {
+    content: '';
+    position: absolute;
+    bottom: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80px;
+    height: 4px;
+    background-color: ${props => props.theme.colors.primary};
+    border-radius: 2px;
+  }
+  
+  background: linear-gradient(
+    to right,
+    ${props => props.theme.colors.text} 20%,
+    ${props => props.theme.colors.primary} 40%,
+    ${props => props.theme.colors.text} 60%
+  );
+  background-size: 200% auto;
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: ${textShine} 4s linear infinite;
 `;
 
 const ActionsContainer = styled.div`
@@ -32,24 +94,42 @@ const ActionsContainer = styled.div`
   margin-bottom: 20px;
 `;
 
-const Button = styled.button`
-  background-color: ${props => props.primary ? '#4CAF50' : '#2196F3'};
-  color: white;
+const StyledButton = styled.button`
+  background-color: ${props => 
+    props.primary ? props.theme.colors.primary : 
+    props.danger ? props.theme.colors.danger : 
+    props.theme.colors.secondary};
+  color: ${props => props.primary ? props.theme.colors.secondary : 'white'};
   border: none;
-  padding: 10px 15px;
+  padding: 10px 16px;
   cursor: pointer;
-  border-radius: 4px;
-  font-weight: bold;
+  border-radius: 6px;
+  font-weight: 600;
+  transition: all 0.25s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: ${props => props.theme.shadows.small};
   
   &:hover {
-    background-color: ${props => props.primary ? '#45a049' : '#0b7dda'};
+    transform: translateY(-2px);
+    box-shadow: ${props => props.theme.shadows.medium};
+    background-color: ${props => 
+      props.primary ? props.theme.colors.primaryHover : 
+      props.danger ? props.theme.colors.dangerHover : 
+      props.theme.colors.secondaryHover};
+  }
+  
+  &:active {
+    transform: translateY(1px);
+    box-shadow: ${props => props.theme.shadows.small};
   }
 `;
 
 const StatsContainer = styled.div`
   text-align: right;
   margin-bottom: 10px;
-  color: #666;
+  color: ${props => props.theme.colors.textLight};
   font-size: 0.9em;
 `;
 
@@ -63,35 +143,35 @@ const NoResults = styled.div`
   grid-column: 1 / -1;
   text-align: center;
   padding: 40px;
-  color: #777;
+  color: ${props => props.theme.colors.textLight};
   font-style: italic;
-  background-color: white;
+  background-color: ${props => props.theme.colors.cardBackground};
   border-radius: 8px;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  box-shadow: ${props => props.theme.shadows.small};
 `;
 
 const LoadingIndicator = styled.div`
   text-align: center;
   padding: 2rem;
   font-size: 1.2rem;
-  color: #666;
+  color: ${props => props.theme.colors.textLight};
 `;
 
 const ErrorMessage = styled.div`
   text-align: center;
   padding: 2rem;
   font-size: 1.2rem;
-  color: #f44336;
-  background-color: #ffebee;
+  color: white;
+  background-color: ${props => props.theme.colors.danger};
   border-radius: 8px;
   margin-bottom: 1rem;
 `;
 
 const SearchContainer = styled.div`
-  background-color: white;
+  background-color: ${props => props.theme.colors.cardBackground};
   padding: 20px;
   border-radius: 8px;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  box-shadow: ${props => props.theme.shadows.small};
   margin-bottom: 20px;
 `;
 
@@ -111,7 +191,7 @@ const Label = styled.label`
   display: block;
   margin-bottom: 5px;
   font-weight: 600;
-  color: #555;
+  color: ${props => props.theme.colors.text};
 `;
 
 const Input = styled.input`
@@ -120,6 +200,12 @@ const Input = styled.input`
   border: 1px solid #ddd;
   border-radius: 4px;
   box-sizing: border-box;
+  
+  &:focus {
+    border-color: ${props => props.theme.colors.primary};
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(150, 255, 0, 0.2);
+  }
 `;
 
 const Select = styled.select`
@@ -128,6 +214,11 @@ const Select = styled.select`
   border: 1px solid #ddd;
   border-radius: 4px;
   box-sizing: border-box;
+  
+  &:focus {
+    border-color: ${props => props.theme.colors.primary};
+    outline: none;
+  }
 `;
 
 // Componente Dashboard
@@ -164,31 +255,30 @@ const Dashboard = () => {
   }, [filters, products]);
 
   // Función para cargar productos
-  // Reemplaza la función fetchProducts con esta versión
-const fetchProducts = async () => {
-  try {
-    setLoading(true);
-    console.log('Solicitando productos desde:', `${API_URL}/api/products`);
-    const data = await productService.getAllProducts();
-    console.log('Productos cargados:', data);
-    
-    // Añadir esto para ver cómo están formateados los IDs de imagen
-    if (data && data.length > 0) {
-      console.log('Ejemplo de producto:', data[0]);
-      console.log('Ejemplo de ID de imagen:', 
-        data[0].image ? `${typeof data[0].image}: ${data[0].image.toString()}` : 'Sin imagen');
+  const fetchProducts = async () => {
+    try {
+      setLoading(true);
+      console.log('Solicitando productos desde:', `${API_URL}/api/products`);
+      const data = await productService.getAllProducts();
+      console.log('Productos cargados:', data);
+      
+      // Añadir esto para ver cómo están formateados los IDs de imagen
+      if (data && data.length > 0) {
+        console.log('Ejemplo de producto:', data[0]);
+        console.log('Ejemplo de ID de imagen:', 
+          data[0].image ? `${typeof data[0].image}: ${data[0].image.toString()}` : 'Sin imagen');
+      }
+      
+      setProducts(data);
+      setFilteredProducts(data);
+      setError(null);
+    } catch (err) {
+      console.error('Error al cargar productos completo:', err);
+      setError('Error al cargar productos');
+    } finally {
+      setLoading(false);
     }
-    
-    setProducts(data);
-    setFilteredProducts(data);
-    setError(null);
-  } catch (err) {
-    console.error('Error al cargar productos completo:', err);
-    setError('Error al cargar productos');
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
   // Función para aplicar filtros
   const applyFilters = () => {
@@ -416,131 +506,114 @@ const fetchProducts = async () => {
           </FilterItem>
         </FilterSection>
         
-        <Button primary="true" onClick={handleSearch}>Buscar</Button>
-        <Button onClick={handleReset} style={{marginLeft: '10px', backgroundColor: '#f44336'}}>
+        <StyledButton primary onClick={handleSearch}>Buscar</StyledButton>
+        <StyledButton onClick={handleReset} style={{marginLeft: '10px', backgroundColor: props => props.theme.colors.danger}}>
           Reiniciar filtros
-        </Button>
+        </StyledButton>
       </SearchContainer>
     );
   };
 
   // Renderizar tarjeta de producto
-const renderProductCard = (product) => {
-  // Función para manejar errores de imagen de manera limpia
-  const handleImageError = (e) => {
-    console.error(`Error cargando imagen para ${product.name}:`, e);
-    e.target.style.display = 'none';
-    const container = e.target.parentNode;
-    // Limpiar el contenedor
-    while (container.firstChild) {
-      container.removeChild(container.firstChild);
-    }
-    // Crear un placeholder
-    const placeholder = document.createElement('div');
-    placeholder.style.fontSize = '24px';
-    placeholder.style.color = '#ccc';
-    placeholder.style.display = 'flex';
-    placeholder.style.justifyContent = 'center';
-    placeholder.style.alignItems = 'center';
-    placeholder.style.width = '100%';
-    placeholder.style.height = '100%';
-    placeholder.textContent = product.name.charAt(0).toUpperCase();
-    container.appendChild(placeholder);
-  };
+  const renderProductCard = (product) => {
+    // Función para manejar errores de imagen de manera limpia
+    const handleImageError = (e) => {
+      console.error(`Error cargando imagen para ${product.name}:`, e);
+      e.target.style.display = 'none';
+      const container = e.target.parentNode;
+      // Limpiar el contenedor
+      while (container.firstChild) {
+        container.removeChild(container.firstChild);
+      }
+      // Crear un placeholder
+      const placeholder = document.createElement('div');
+      placeholder.style.fontSize = '24px';
+      placeholder.style.color = '#ccc';
+      placeholder.style.display = 'flex';
+      placeholder.style.justifyContent = 'center';
+      placeholder.style.alignItems = 'center';
+      placeholder.style.width = '100%';
+      placeholder.style.height = '100%';
+      placeholder.textContent = product.name.charAt(0).toUpperCase();
+      container.appendChild(placeholder);
+    };
 
-  return (
-    <div key={product._id} style={{
-      backgroundColor: 'white',
-      borderRadius: '8px',
-      boxShadow: '0 2px 5px rgba(0,0,0,0.1)',
-      padding: '15px',
-      marginBottom: '20px'
-    }}>
-      <div style={{
-        height: '150px',
-        backgroundColor: '#f5f5f5',
-        borderRadius: '4px',
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginBottom: '10px'
+    return (
+      <ProductCard key={product._id} style={{
+        backgroundColor: 'white',
+        borderRadius: '8px',
+        boxShadow: '0 2px 5px rgba(0,0,0,0.1)',
+        padding: '15px',
+        marginBottom: '20px',
+        borderTop: `3px solid ${props => props.theme.colors.primary}`
       }}>
-        {product.image ? (
-          <>
-            {console.log('URL de imagen:', `${API_URL}/images/${product.image}`)}
-            <img
-              src={`${API_URL}/images/${product.image}`}
-              alt={product.name}
-              style={{
-                maxWidth: '100%',
-                maxHeight: '100%',
-                objectFit: 'contain'
-              }}
-              onError={handleImageError}
-            />
-          </>
-        ) : (
-          <div style={{
-            fontSize: '24px',
-            color: '#ccc',
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            width: '100%',
-            height: '100%'
-          }}>
-            {product.name.charAt(0).toUpperCase()}
-          </div>
-        )}
-      </div>
-      
-      <h3 style={{ margin: '0 0 10px 0', fontSize: '18px' }}>{product.name}</h3>
-      <p style={{ margin: '5px 0', color: '#666', fontSize: '14px' }}>Categoría: {product.category}</p>
-      <p style={{ margin: '5px 0', color: '#666', fontSize: '14px', display: 'flex', alignItems: 'center' }}>
-        <span style={{ 
-          display: 'inline-block',
-          width: '14px',
-          height: '14px',
-          borderRadius: '50%',
-          backgroundColor: getColorCode(product.color),
-          border: '1px solid #ddd',
-          marginRight: '8px'
-        }}></span>
-        Color: {product.color}
-      </p>
-      <p style={{ margin: '10px 0', fontWeight: 'bold', color: '#e91e63' }}>
-        Precio: ${parseFloat(product.price).toFixed(2)}
-      </p>
-      
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '15px' }}>
-        <button 
-          onClick={() => handleEditProduct(product)}
-          style={{
-            backgroundColor: '#2196F3',
-            color: 'white',
-            border: 'none',
-            borderRadius: '4px',
-            padding: '6px 12px',
-            cursor: 'pointer'
-          }}>
+        <div style={{
+          height: '150px',
+          backgroundColor: '#f5f5f5',
+          borderRadius: '4px',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          marginBottom: '10px'
+        }}>
+          {product.image ? (
+            <>
+              {console.log('URL de imagen:', `${API_URL}/images/${product.image}`)}
+              <img
+                src={`${API_URL}/images/${product.image}`}
+                alt={product.name}
+                style={{
+                  maxWidth: '100%',
+                  maxHeight: '100%',
+                  objectFit: 'contain'
+                }}
+                onError={handleImageError}
+              />
+            </>
+          ) : (
+            <div style={{
+              fontSize: '24px',
+              color: '#ccc',
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              width: '100%',
+              height: '100%'
+            }}>
+              {product.name.charAt(0).toUpperCase()}
+            </div>
+          )}
+        </div>
+        
+        <h3 style={{ margin: '0 0 10px 0', fontSize: '18px' }}>{product.name}</h3>
+        <p style={{ margin: '5px 0', color: '#666', fontSize: '14px' }}>Categoría: {product.category}</p>
+        <p style={{ margin: '5px 0', color: '#666', fontSize: '14px', display: 'flex', alignItems: 'center' }}>
+          <span style={{ 
+            display: 'inline-block',
+            width: '14px',
+            height: '14px',
+            borderRadius: '50%',
+            backgroundColor: getColorCode(product.color),
+            border: '1px solid #ddd',
+            marginRight: '8px'
+          }}></span>
+          Color: {product.color}
+        </p>
+        <p style={{ margin: '10px 0', fontWeight: 'bold', color: '#96ff00', backgroundColor: '#222', display: 'inline-block', padding: '3px 8px', borderRadius: '4px' }}>
+          Precio: ${parseFloat(product.price).toFixed(2)}
+        </p>
+        
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '15px' }}>
+        <StyledButton onClick={() => handleEditProduct(product)} style={{backgroundColor: '#2196F3'}}>
           Editar
-        </button>
-        <button 
-          onClick={() => handleDeleteClick(product._id)}
-          style={{
-            backgroundColor: '#f44336',
-            color: 'white',
-            border: 'none',
-            borderRadius: '4px',
-            padding: '6px 12px',
-            cursor: 'pointer'
-          }}>
+        </StyledButton>
+        <StyledButton danger onClick={() => handleDeleteClick(product._id)}>
           Eliminar
-        </button>
-      </div>
-    </div>
-  );
-};
+        </StyledButton>
+        </div>
+      </ProductCard>
+    );
+  };
 
   // Componente Modal
   const Modal = ({ isOpen, title, onClose, children }) => {
@@ -667,49 +740,45 @@ const renderProductCard = (product) => {
         <input type="hidden" name="_id" value={formData._id} />
         
         <div style={{marginBottom: '15px'}}>
-          <label style={{display: 'block', marginBottom: '5px'}}>Nombre:</label>
-          <input 
+          <label style={{display: 'block', marginBottom: '5px', fontWeight: '600', color: props => props.theme.colors.text}}>Nombre:</label>
+          <Input 
             type="text" 
             name="name" 
             value={formData.name} 
             onChange={handleChange}
-            style={{width: '100%', padding: '8px'}}
             required
           />
         </div>
         
         <div style={{marginBottom: '15px'}}>
-          <label style={{display: 'block', marginBottom: '5px'}}>Categoría:</label>
-          <input 
+          <label style={{display: 'block', marginBottom: '5px', fontWeight: '600', color: props => props.theme.colors.text}}>Categoría:</label>
+          <Input 
             type="text" 
             name="category" 
             value={formData.category} 
             onChange={handleChange}
-            style={{width: '100%', padding: '8px'}}
             required
           />
         </div>
         
         <div style={{marginBottom: '15px'}}>
-          <label style={{display: 'block', marginBottom: '5px'}}>Color:</label>
-          <input 
+          <label style={{display: 'block', marginBottom: '5px', fontWeight: '600', color: props => props.theme.colors.text}}>Color:</label>
+          <Input 
             type="text" 
             name="color" 
             value={formData.color} 
             onChange={handleChange}
-            style={{width: '100%', padding: '8px'}}
             required
           />
         </div>
         
         <div style={{marginBottom: '15px'}}>
-          <label style={{display: 'block', marginBottom: '5px'}}>Precio:</label>
-          <input 
+          <label style={{display: 'block', marginBottom: '5px', fontWeight: '600', color: props => props.theme.colors.text}}>Precio:</label>
+          <Input 
             type="number" 
             name="price" 
             value={formData.price} 
             onChange={handleChange}
-            style={{width: '100%', padding: '8px'}}
             step="0.01"
             min="0"
             required
@@ -717,13 +786,12 @@ const renderProductCard = (product) => {
         </div>
         
         <div style={{marginBottom: '15px'}}>
-          <label style={{display: 'block', marginBottom: '5px'}}>Imagen:</label>
-          <input 
+          <label style={{display: 'block', marginBottom: '5px', fontWeight: '600', color: props => props.theme.colors.text}}>Imagen:</label>
+          <Input 
             type="file" 
             name="image" 
             accept="image/*"
             onChange={handleFileChange}
-            style={{width: '100%', padding: '8px'}}
           />
           
           {error && <div style={{color: 'red', fontSize: '0.8rem', marginTop: '5px'}}>{error}</div>}
@@ -746,29 +814,24 @@ const renderProductCard = (product) => {
         </div>
         
         <div style={{display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '20px'}}>
-          <button 
+          <StyledButton 
             type="submit" 
             style={{
-              backgroundColor: '#4CAF50', 
-              color: 'white', 
-              border: 'none', 
-              padding: '10px 15px', 
-              borderRadius: '4px',
-              cursor: loading ? 'not-allowed' : 'pointer',
-              opacity: loading ? 0.7 : 1
+              backgroundColor: '#96ff00', 
+              color: '#222',
             }}
             disabled={loading}
           >
             {loading ? 'Guardando...' : 'Guardar'}
-          </button>
-          <button 
+          </StyledButton>
+          <StyledButton 
             type="button" 
             onClick={onCancel} 
-            style={{backgroundColor: '#607d8b', color: 'white', border: 'none', padding: '10px 15px', borderRadius: '4px'}}
+            style={{backgroundColor: '#607d8b', color: 'white'}}
             disabled={loading}
           >
             Cancelar
-          </button>
+          </StyledButton>
         </div>
       </form>
     );
@@ -801,16 +864,16 @@ const renderProductCard = (product) => {
           <h2 style={{margin: '0 0 15px 0'}}>{title}</h2>
           <p>{message}</p>
           <div style={{display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '20px'}}>
-            <button 
+            <StyledButton 
               onClick={onConfirm} 
-              style={{backgroundColor: '#f44336', color: 'white', border: 'none', padding: '10px 15px', borderRadius: '4px'}}>
+              style={{backgroundColor: '#f44336', color: 'white'}}>
               Eliminar
-            </button>
-            <button 
+            </StyledButton>
+            <StyledButton 
               onClick={onCancel}
-              style={{backgroundColor: '#607d8b', color: 'white', border: 'none', padding: '10px 15px', borderRadius: '4px'}}>
+              style={{backgroundColor: '#607d8b', color: 'white'}}>
               Cancelar
-            </button>
+            </StyledButton>
           </div>
         </div>
       </div>
@@ -820,17 +883,20 @@ const renderProductCard = (product) => {
   // Renderizado del componente principal
   return (
     <Container>
-      <Header>
+      <DashboardHeader>
         <Title>Sistema de Inventario</Title>
-      </Header>
+      </DashboardHeader>
       
       <ActionsContainer>
-        <Button primary="true" onClick={handleCreateProduct}>
-          Crear Nuevo Producto
-        </Button>
-        <Button onClick={handleExportToCSV}>
-          Exportar a CSV
-        </Button>
+
+          <StyledButton primary onClick={handleCreateProduct}>
+            Crear Nuevo Producto
+          </StyledButton>
+
+          <StyledButton onClick={handleExportToCSV} style={{backgroundColor: '#222'}}>
+            Exportar a CSV
+          </StyledButton>
+
       </ActionsContainer>
       
       <SearchFilters />

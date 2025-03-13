@@ -4,10 +4,10 @@ import styled from 'styled-components';
 import { Link } from 'react-router-dom';
 
 const HeaderContainer = styled.header`
-  background-color: #4CAF50;
+  background-color: ${props => props.theme.colors.secondary};
   color: white;
   padding: 15px 0;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  box-shadow: ${props => props.theme.shadows.small};
 `;
 
 const Content = styled.div`
@@ -20,10 +20,7 @@ const Content = styled.div`
 `;
 
 const Logo = styled(Link)`
-  color: white;
   text-decoration: none;
-  font-size: 1.5rem;
-  font-weight: bold;
   display: flex;
   align-items: center;
 `;
@@ -34,14 +31,16 @@ const Nav = styled.nav`
 `;
 
 const NavLink = styled(Link)`
-  color: white;
+  color: ${props => props.theme.colors.primary};
   text-decoration: none;
-  padding: 5px 10px;
+  padding: 6px 12px;
   border-radius: 4px;
-  transition: background-color 0.3s;
+  font-weight: 500;
+  transition: all 0.2s ease;
   
   &:hover {
-    background-color: rgba(255, 255, 255, 0.1);
+    background-color: rgba(150, 255, 0, 0.15);
+    transform: translateY(-2px);
   }
 `;
 
@@ -50,7 +49,7 @@ const Header = () => {
     <HeaderContainer>
       <Content>
         <Logo to="/">
-          Sistema de Inventario
+          <img src="/logotipo.png" alt="Reconstructora Antigua Jr." style={{ height: '35px' }} />
         </Logo>
         <Nav>
           <NavLink to="/">Productos</NavLink>

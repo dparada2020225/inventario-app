@@ -4,15 +4,16 @@ import styled from 'styled-components';
 import { getColorCode } from '../../utils/colorUtils';
 
 const Card = styled.div`
-  background-color: white;
+  background-color: ${props => props.theme.colors.cardBackground};
   padding: 15px;
   border-radius: 8px;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  box-shadow: ${props => props.theme.shadows.small};
   transition: transform 0.2s, box-shadow 0.2s;
+  border-top: 3px solid ${props => props.theme.colors.primary};
   
   &:hover {
     transform: translateY(-5px);
-    box-shadow: 0 5px 15px rgba(0,0,0,0.15);
+    box-shadow: ${props => props.theme.shadows.medium};
   }
 `;
 
@@ -47,18 +48,19 @@ const ProductImage = styled.img`
 
 const ProductName = styled.h3`
   margin: 0 0 10px 0;
-  color: #333;
+  color: ${props => props.theme.colors.text};
 `;
 
 const ProductDetail = styled.p`
   margin: 5px 0;
-  color: #666;
+  color: ${props => props.theme.colors.textLight};
 `;
 
 const ProductPrice = styled.p`
-  margin: 5px 0;
+  margin: 12px 0;
   font-weight: bold;
-  color: #e91e63;
+  color: ${props => props.theme.colors.primary};
+  font-size: 1.1rem;
 `;
 
 const ButtonContainer = styled.div`
@@ -68,16 +70,22 @@ const ButtonContainer = styled.div`
 `;
 
 const Button = styled.button`
-  background-color: ${props => props.danger ? '#f44336' : '#2196F3'};
-  color: white;
+  background-color: ${props => props.danger ? props.theme.colors.danger : props.theme.colors.primary};
+  color: ${props => props.danger ? 'white' : props.theme.colors.secondary};
   border: none;
   padding: 8px 12px;
   border-radius: 4px;
   cursor: pointer;
-  transition: background-color 0.2s;
+  font-weight: 600;
+  transition: all 0.2s;
   
   &:hover {
-    background-color: ${props => props.danger ? '#d32f2f' : '#0b7dda'};
+    transform: translateY(-2px);
+    background-color: ${props => props.danger ? props.theme.colors.dangerHover || '#d32f2f' : props.theme.colors.primaryHover};
+  }
+  
+  &:active {
+    transform: translateY(1px);
   }
 `;
 

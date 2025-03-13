@@ -11,23 +11,25 @@ const ButtonGroup = styled.div`
 `;
 
 const Button = styled.button`
-  background-color: ${props => props.danger ? '#f44336' : '#607d8b'};
+  background-color: ${props => props.danger ? props.theme.colors.danger : props.theme.colors.secondary};
   color: white;
   border: none;
   padding: 10px 15px;
   cursor: pointer;
   border-radius: 4px;
   font-weight: bold;
+  transition: all 0.2s;
   
   &:hover {
-    background-color: ${props => props.danger ? '#d32f2f' : '#546e7a'};
+    transform: translateY(-2px);
+    background-color: ${props => props.danger ? props.theme.colors.dangerHover || '#d32f2f' : '#444'};
   }
 `;
 
 const Message = styled.p`
   margin: 20px 0;
   font-size: 16px;
-  color: #333;
+  color: ${props => props.theme.colors.text};
 `;
 
 const ConfirmDialog = ({ isOpen, title, message, onConfirm, onCancel }) => {

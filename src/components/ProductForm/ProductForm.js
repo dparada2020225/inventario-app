@@ -1,69 +1,223 @@
 // src/components/ProductForm/ProductForm.js
 import React, { useState, useEffect } from 'react';
-import styled from 'styled-components';
+import styled, { keyframes } from 'styled-components';
 import axios from 'axios';
+
+const fadeIn = keyframes`
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+`;
 
 const Form = styled.form`
   display: flex;
   flex-direction: column;
   gap: 15px;
+  animation: ${fadeIn} 0.3s ease forwards;
 `;
 
 const FormGroup = styled.div`
   margin-bottom: 15px;
+  transition: all 0.2s ease;
+  
+  &:focus-within {
+    transform: translateY(-2px);
+  }
 `;
 
 const Label = styled.label`
   display: block;
   margin-bottom: 5px;
   font-weight: 600;
-  color: #555;
+  color: ${props => props.theme.colors.text};
 `;
 
 const Input = styled.input`
   width: 100%;
-  padding: 8px;
+  padding: 10px;
   border: 1px solid #ddd;
-  border-radius: 4px;
+  border-radius: 6px;
   box-sizing: border-box;
-`;
-
-const ButtonGroup = styled.div`
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-  margin-top: 20px;
-`;
-
-const Button = styled.button`
-  background-color: ${props => props.type === 'submit' ? '#4CAF50' : '#607d8b'};
-  color: white;
-  border: none;
-  padding: 10px 15px;
-  cursor: pointer;
-  border-radius: 4px;
-  font-weight: bold;
+  transition: all 0.2s ease;
   
-  &:hover {
-    background-color: ${props => props.type === 'submit' ? '#45a049' : '#546e7a'};
-  }
-`;
-
-const ImagePreview = styled.div`
-  margin-top: 10px;
-  max-width: 200px;
-  max-height: 150px;
-  img {
-    max-width: 100%;
-    max-height: 150px;
-    border-radius: 4px;
+  &:focus {
+    border-color: ${props => props.theme.colors.primary};
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(150, 255, 0, 0.2);
   }
 `;
 
 const ErrorMessage = styled.div`
-  color: #f44336;
+  color: ${props => props.theme.colors.danger};
   font-size: 0.8rem;
   margin-top: 5px;
+  padding: 8px 12px;
+  background-color: #fff8f8;
+  border-radius: 4px;
+  border-left: 3px solid ${props => props.theme.colors.danger};
+`;
+
+const InfoMessage = styled.div`
+  margin-top: 10px;
+  color: #666;
+  font-size: 0.9rem;
+  padding: 8px 12px;
+  background-color: #f9f9f9;
+  border-radius: 4px;
+  border-left: 3px solid ${props => props.theme.colors.primary};
+`;
+
+// Componentes para el selector de archivos mejorado
+const FileInputWrapper = styled.div`
+  margin-bottom: 20px;
+`;
+
+const FileInputLabel = styled.label`
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 600;
+  color: ${props => props.theme.colors.text};
+`;
+
+const FileInputContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 8px;
+`;
+
+const CustomFileButton = styled.label`
+  display: inline-block;
+  padding: 10px 16px;
+  background-color: ${props => props.theme.colors.primary};
+  color: ${props => props.theme.colors.secondary};
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.2s ease;
+  box-shadow: ${props => props.theme.shadows.small};
+  
+  &:hover {
+    background-color: ${props => props.theme.colors.primaryHover};
+    transform: translateY(-2px);
+    box-shadow: ${props => props.theme.shadows.medium};
+  }
+  
+  &:active {
+    transform: translateY(1px);
+  }
+`;
+
+const FileDisplay = styled.div`
+  padding: 10px;
+  background-color: #f8f8f8;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 14px;
+  color: #666;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  position: relative;
+  padding-left: 28px;
+  
+  &::before {
+    content: "📄";
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    opacity: 0.7;
+  }
+`;
+
+const HiddenInput = styled.input`
+  position: absolute;
+  left: -9999px;
+  opacity: 0;
+  visibility: hidden;
+`;
+
+const ImagePreview = styled.div`
+  margin-top: 15px;
+  width: 100%;
+  max-width: 250px;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 3px 15px rgba(0,0,0,0.1);
+  transition: all 0.3s ease;
+  
+  &:hover {
+    transform: scale(1.03);
+    box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+  }
+  
+  img {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+`;
+
+const ButtonContainer = styled.div`
+  display: flex;
+  gap: 12px;
+  margin-top: 20px;
+  justify-content: flex-end;
+`;
+
+const ActionButton = styled.button`
+  padding: 12px 24px;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+  box-shadow: ${props => props.theme.shadows.small};
+  
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: ${props => props.theme.shadows.medium};
+  }
+  
+  &:active {
+    transform: translateY(1px);
+  }
+  
+  &:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(150, 255, 0, 0.3);
+  }
+  
+  &:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+    transform: none;
+  }
+`;
+
+const SaveButton = styled(ActionButton)`
+  background-color: ${props => props.theme.colors.primary};
+  color: #111;
+  
+  &:hover {
+    background-color: ${props => props.theme.colors.primaryHover};
+  }
+`;
+
+const CancelButton = styled(ActionButton)`
+  background-color: #6c757d;
+  color: white;
+  
+  &:hover {
+    background-color: #5a6268;
+  }
 `;
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
@@ -168,7 +322,6 @@ const ProductForm = ({ product, onSave, onCancel }) => {
       };
       
       onSave(productData);
-      setLoading(false);
     } catch (error) {
       console.error('Error al guardar producto:', error);
       setError('Error al guardar producto. Inténtalo de nuevo.');
@@ -230,15 +383,23 @@ const ProductForm = ({ product, onSave, onCancel }) => {
         />
       </FormGroup>
       
-      <FormGroup>
-        <Label htmlFor="image">Imagen:</Label>
-        <Input
-          type="file"
-          id="image"
-          name="image"
-          accept="image/*"
-          onChange={handleFileChange}
-        />
+      <FileInputWrapper>
+        <FileInputLabel htmlFor="fileInput">Imagen:</FileInputLabel>
+        <FileInputContainer>
+          <CustomFileButton htmlFor="fileInput">
+            Seleccionar archivo
+          </CustomFileButton>
+          <FileDisplay>
+            {selectedFile ? selectedFile.name : 'Ningún archivo seleccionado'}
+          </FileDisplay>
+          <HiddenInput
+            type="file"
+            id="fileInput"
+            accept="image/*"
+            onChange={handleFileChange}
+          />
+        </FileInputContainer>
+        
         {error && <ErrorMessage>{error}</ErrorMessage>}
         
         {previewUrl && (
@@ -248,18 +409,20 @@ const ProductForm = ({ product, onSave, onCancel }) => {
         )}
         
         {formData.image && !selectedFile && !previewUrl && (
-          <div style={{ marginTop: '5px', color: '#666', fontSize: '0.9rem' }}>
+          <InfoMessage>
             Imagen actual guardada. Sube una nueva para reemplazarla.
-          </div>
+          </InfoMessage>
         )}
-      </FormGroup>
+      </FileInputWrapper>
       
-      <ButtonGroup>
-        <Button type="submit" disabled={loading}>
+      <ButtonContainer>
+        <SaveButton type="submit" disabled={loading}>
           {loading ? 'Guardando...' : 'Guardar'}
-        </Button>
-        <Button type="button" onClick={onCancel} disabled={loading}>Cancelar</Button>
-      </ButtonGroup>
+        </SaveButton>
+        <CancelButton type="button" onClick={onCancel} disabled={loading}>
+          Cancelar
+        </CancelButton>
+      </ButtonContainer>
     </Form>
   );
 };
