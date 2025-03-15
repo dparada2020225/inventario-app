@@ -105,6 +105,78 @@ export const productService = {
   }
 };
 
+// Servicios para compras
+export const purchaseService = {
+  // Obtener todas las compras
+  getAllPurchases: async () => {
+    try {
+      const response = await axios.get(`${API_URL}/api/purchases`);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching purchases:', error);
+      throw error;
+    }
+  },
+  
+  // Obtener una compra por ID
+  getPurchaseById: async (id) => {
+    try {
+      const response = await axios.get(`${API_URL}/api/purchases/${id}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching purchase:', error);
+      throw error;
+    }
+  },
+  
+  // Crear una nueva compra
+  createPurchase: async (purchaseData) => {
+    try {
+      const response = await axios.post(`${API_URL}/api/purchases`, purchaseData);
+      return response.data;
+    } catch (error) {
+      console.error('Error creating purchase:', error);
+      throw error;
+    }
+  }
+};
+
+// Servicios para ventas
+export const saleService = {
+  // Obtener todas las ventas
+  getAllSales: async () => {
+    try {
+      const response = await axios.get(`${API_URL}/api/sales`);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching sales:', error);
+      throw error;
+    }
+  },
+  
+  // Obtener una venta por ID
+  getSaleById: async (id) => {
+    try {
+      const response = await axios.get(`${API_URL}/api/sales/${id}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching sale:', error);
+      throw error;
+    }
+  },
+  
+  // Crear una nueva venta
+  createSale: async (saleData) => {
+    try {
+      const response = await axios.post(`${API_URL}/api/sales`, saleData);
+      return response.data;
+    } catch (error) {
+      console.error('Error creating sale:', error);
+      throw error;
+    }
+  }
+};
+
 // Servicio de autenticación
 export const authService = {
   // Iniciar sesión

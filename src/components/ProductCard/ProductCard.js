@@ -57,18 +57,49 @@ const ProductImage = styled.img`
 const ProductName = styled.h3`
   margin: 0 0 10px 0;
   color: ${props => props.theme.colors.text};
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 `;
 
 const ProductDetail = styled.p`
   margin: 5px 0;
   color: ${props => props.theme.colors.textLight};
+  display: flex;
+  align-items: center;
+  gap: 5px;
 `;
 
-const ProductPrice = styled.p`
-  margin: 12px 0;
+const PriceContainer = styled.div`
+  display: flex;
+  justify-content: space-between;
+  margin: 10px 0;
+  align-items: center;
+`;
+
+const SalePrice = styled.p`
+  margin: 0;
   font-weight: bold;
   color: ${props => props.theme.colors.primary};
   font-size: 1.1rem;
+`;
+
+const PurchasePrice = styled.p`
+  margin: 0;
+  font-size: 0.85rem;
+  color: ${props => props.theme.colors.textLight};
+`;
+
+const StockBadge = styled.div`
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background-color: ${props => props.inStock ? '#4caf50' : '#f44336'};
+  color: white;
+  font-size: 0.7rem;
+  font-weight: bold;
+  padding: 3px 8px;
+  border-radius: 12px;
 `;
 
 const ButtonContainer = styled.div`
@@ -97,6 +128,11 @@ const Button = styled.button`
   }
 `;
 
+const ButtonGroup = styled.div`
+  display: flex;
+  gap: 8px;
+`;
+
 const ColorDot = styled.span`
   display: inline-block;
   width: 14px;
@@ -110,7 +146,7 @@ const ColorDot = styled.span`
 
 const API_URL = process.env.REACT_APP_API_URL || 'https://inventario-server.vercel.app';
 
-const ProductCard = ({ product, onEdit, onDelete, isAdmin }) => {
+const ProductCard = ({ product, onEdit, onDelete, onAddToSale, isAdmin }) => {
   const [imageError, setImageError] = useState(false);
   const [isViewerOpen, setIsViewerOpen] = useState(false);
 
@@ -129,6 +165,10 @@ const ProductCard = ({ product, onEdit, onDelete, isAdmin }) => {
   return (
     <>
       <Card>
+        <StockBadge inStock={product.stock > 0}>
+          {product.stock > 0 ? `Stock: ${product.stock}` : 'Sin stock'}
+        </StockBadge>
+        
         <ImageContainer onClick={handleImageClick}>
           {!imageError && product.image ? (
             <ProductImage 
@@ -150,18 +190,38 @@ const ProductCard = ({ product, onEdit, onDelete, isAdmin }) => {
           Color: {product.color}
         </ProductDetail>
         
-        <ProductPrice>
-          Precio: Q {parseFloat(product.price).toFixed(2)}
-        </ProductPrice>
+        <PriceContainer>
+          <SalePrice>
+            Precio: Q {parseFloat(product.salePrice).toFixed(2)}
+          </SalePrice>
+          <PurchasePrice>
+            Compra: Q {parseFloat(product.lastPurchasePrice || 0).toFixed(2)}
+          </PurchasePrice>
+        </PriceContainer>
         
         {isAdmin && (
           <ButtonContainer>
-            <Button onClick={() => onEdit(product)}>
-              Editar
-            </Button>
-            <Button danger onClick={() => onDelete(product._id)}>
-              Eliminar
-            </Button>
+            {onAddToSale && (
+              <Button 
+                disabled={product.stock <= 0}
+                onClick={() => onAddToSale(product)}
+              >
+                Agregar a venta
+              </Button>
+            )}
+            
+            <ButtonGroup>
+              {onEdit && (
+                <Button onClick={() => onEdit(product)}>
+                  Editar
+                </Button>
+              )}
+              {onDelete && (
+                <Button danger onClick={() => onDelete(product._id)}>
+                  Eliminar
+                </Button>
+              )}
+            </ButtonGroup>
           </ButtonContainer>
         )}
       </Card>

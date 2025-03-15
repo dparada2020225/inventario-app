@@ -1,17 +1,13 @@
 // src/pages/Dashboard/Dashboard.js
 import React, { useState, useEffect } from 'react';
 import styled, { keyframes } from 'styled-components';
-import productService from '../../services/api';
-import { getColorCode } from '../../utils/colorUtils';
-import axios from 'axios';
-import ProductForm from '../../components/ProductForm/ProductForm';
+import { ProductProvider, useProducts } from '../../context/ProductContext';
+import ProductCard from '../../components/ProductCard/ProductCard';
 import Modal from '../../components/Modal/Modal';
 import ConfirmDialog from '../../components/ConfirmDialog/ConfirmDialog';
-import ProductCard from '../../components/ProductCard/ProductCard';
 import { useAuth } from '../../context/AuthContext';
-
-// Definición de la URL de la API
-const API_URL = process.env.REACT_APP_API_URL || 'https://inventario-server.vercel.app';
+import { Link } from 'react-router-dom';
+import productService from '../../services/api';
 
 // Animaciones
 const fadeIn = keyframes`
@@ -79,10 +75,35 @@ const Title = styled.h1`
   animation: ${textShine} 4s linear infinite;
 `;
 
+const SubTitle = styled.h2`
+  color: ${props => props.theme.colors.textLight};
+  font-size: 1.2rem;
+  font-weight: normal;
+  margin-top: 10px;
+`;
+
 const ActionsContainer = styled.div`
   display: flex;
   justify-content: space-between;
   margin-bottom: 20px;
+`;
+
+const AdminMessage = styled.div`
+  background-color: #f8f8f8;
+  border-left: 3px solid ${props => props.theme.colors.primary};
+  padding: 15px;
+  margin-bottom: 20px;
+  border-radius: 4px;
+  
+  a {
+    color: ${props => props.theme.colors.primary};
+    font-weight: bold;
+    text-decoration: none;
+    
+    &:hover {
+      text-decoration: underline;
+    }
+  }
 `;
 
 const StyledButton = styled.button`
@@ -231,130 +252,72 @@ const Select = styled.select`
   }
 `;
 
-// Componente Dashboard
-const Dashboard = () => {
-  // Estado para productos y filtros
-  const [products, setProducts] = useState([]);
-  const [filteredProducts, setFilteredProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+const Checkbox = styled.div`
+  display: flex;
+  align-items: center;
+  margin-top: 20px;
   
-  // Estado para modales
-  const [isProductModalOpen, setIsProductModalOpen] = useState(false);
+  input {
+    margin-right: 10px;
+  }
+  
+  label {
+    color: ${props => props.theme.colors.text};
+    font-weight: 600;
+  }
+`;
+
+// Dashboard interno (para usar el contexto de productos)
+const DashboardContent = () => {
+  const {
+    filteredProducts,
+    products,
+    filters,
+    setFilters,
+    categories,
+    colors,
+    loading,
+    error,
+    deleteProduct,
+    exportToCSV,
+    refreshProducts
+  } = useProducts();
+  
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [currentProduct, setCurrentProduct] = useState(null);
   const [productToDelete, setProductToDelete] = useState(null);
   
-  // Estado para filtros
-  const [filters, setFilters] = useState({
-    searchTerm: '',
-    category: '',
-    color: '',
-    minPrice: '',
-    maxPrice: ''
-  });
-
   // Usar el contexto de autenticación
   const { isAdmin } = useAuth();
-
-  // Cargar productos al iniciar
-  useEffect(() => {
-    fetchProducts();
-  }, []);
-
-  // Efecto para aplicar filtros cuando cambien
-  useEffect(() => {
-    applyFilters();
-  }, [filters, products]);
-
-  // Función para cargar productos
-  const fetchProducts = async () => {
-    try {
-      setLoading(true);
-      console.log('Solicitando productos desde:', `${API_URL}/api/products`);
-      const data = await productService.getAllProducts();
-      
-      setProducts(data);
-      setFilteredProducts(data);
-      setError(null);
-    } catch (err) {
-      console.error('Error al cargar productos completo:', err);
-      setError('Error al cargar productos');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Función para aplicar filtros
-  const applyFilters = () => {
-    const { searchTerm, category, color, minPrice, maxPrice } = filters;
-    
-    const filtered = products.filter(product => {
-      // Filtro por texto de búsqueda
-      if (searchTerm && !product.name.toLowerCase().includes(searchTerm.toLowerCase())) {
-        return false;
-      }
-      
-      // Filtro por categoría
-      if (category && product.category !== category) {
-        return false;
-      }
-      
-      // Filtro por color
-      if (color && product.color !== color) {
-        return false;
-      }
-      
-      // Filtro por precio
-      const price = parseFloat(product.price);
-      if (minPrice && price < parseFloat(minPrice)) {
-        return false;
-      }
-      if (maxPrice && price > parseFloat(maxPrice)) {
-        return false;
-      }
-      
-      return true;
-    });
-    
-    setFilteredProducts(filtered);
-  };
-
-  // Manejadores para acciones
-  const handleCreateProduct = () => {
-    setCurrentProduct(null);
-    setIsProductModalOpen(true);
+  
+  // Crear estado local para los filtros
+  const [localFilters, setLocalFilters] = useState({...filters});
+  
+  // Manejar cambios en los inputs sin aplicar los filtros inmediatamente
+  const handleInputChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setLocalFilters(prev => ({
+      ...prev, 
+      [name]: type === 'checkbox' ? checked : value
+    }));
   };
   
-  const handleEditProduct = (product) => {
-    setCurrentProduct(product);
-    setIsProductModalOpen(true);
+  // Aplicar los filtros cuando se hace clic en el botón Buscar
+  const handleSearch = () => {
+    setFilters(localFilters);
   };
   
-  const handleSaveProduct = async (product) => {
-    try {
-      setLoading(true);
-      
-      if (product._id) {
-        // Actualizar producto existente
-        await productService.updateProduct(product._id, product);
-      } else {
-        // Crear nuevo producto (quitar el _id si es un campo vacío)
-        const { _id, ...newProduct } = product;
-        await productService.createProduct(newProduct);
-      }
-      
-      // Recargar productos para obtener la lista actualizada
-      await fetchProducts();
-      
-      // Cerrar modal
-      setIsProductModalOpen(false);
-    } catch (err) {
-      setError('Error al guardar producto');
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
+  // Reiniciar filtros
+  const handleReset = () => {
+    const emptyFilters = {
+      searchTerm: '',
+      category: '',
+      color: '',
+      minPrice: '',
+      maxPrice: '',
+      inStock: false
+    };
+    setLocalFilters(emptyFilters);
+    setFilters(emptyFilters);
   };
   
   const handleDeleteClick = (productId) => {
@@ -366,69 +329,52 @@ const Dashboard = () => {
     if (!productToDelete) return;
     
     try {
-      setLoading(true);
-      await productService.deleteProduct(productToDelete);
-      
-      // Recargar productos para obtener la lista actualizada
-      await fetchProducts();
-      
-      // Cerrar modal
+      await deleteProduct(productToDelete);
       setIsDeleteModalOpen(false);
       setProductToDelete(null);
     } catch (err) {
-      setError('Error al eliminar producto');
-      console.error(err);
-    } finally {
-      setLoading(false);
+      console.error("Error al eliminar producto:", err);
     }
   };
-
+  
   const handleExportToCSV = async () => {
     try {
-      setLoading(true);
-      await productService.exportToCSV();
+      await exportToCSV();
     } catch (err) {
-      setError('Error al exportar a CSV');
-      console.error(err);
-    } finally {
-      setLoading(false);
+      console.error("Error al exportar a CSV:", err);
     }
   };
-
-  // Obtener categorías y colores únicos para los filtros
-  const categories = [...new Set(products.map(p => p.category))].filter(Boolean);
-  const colors = [...new Set(products.map(p => p.color))].filter(Boolean);
-
-  // Componente de filtros de búsqueda
-  const SearchFilters = () => {
-    // Crear estado local para los inputs para evitar re-renders excesivos
-    const [localFilters, setLocalFilters] = useState({...filters});
-
-    // Manejar cambios en los inputs sin aplicar los filtros inmediatamente
-    const handleInputChange = (e) => {
-      const { name, value } = e.target;
-      setLocalFilters(prev => ({...prev, [name]: value}));
-    };
-
-    // Aplicar los filtros cuando se hace clic en el botón Buscar
-    const handleSearch = () => {
-      setFilters(localFilters);
-    };
-
-    // Reiniciar filtros
-    const handleReset = () => {
-      const emptyFilters = {
-        searchTerm: '',
-        category: '',
-        color: '',
-        minPrice: '',
-        maxPrice: ''
-      };
-      setLocalFilters(emptyFilters);
-      setFilters(emptyFilters);
-    };
-
-    return (
+  
+  // Renderizar el componente
+  return (
+    <Container>
+      <DashboardHeader>
+        <Title>Sistema de Inventario</Title>
+        {isAdmin && (
+          <SubTitle>Administra tus productos, compras y ventas</SubTitle>
+        )}
+      </DashboardHeader>
+      
+      {isAdmin && (
+        <AdminMessage>
+          Como administrador, puedes gestionar el inventario a través de compras y ventas. 
+          Visita la sección de <Link to="/admin/transactions">Compras/Ventas</Link> para realizar transacciones.
+        </AdminMessage>
+      )}
+      
+      {isAdmin && (
+        <ActionsContainer>
+          <Link to="/admin/transactions" style={{ textDecoration: 'none' }}>
+            <StyledButton primary>
+              Ir a Compras/Ventas
+            </StyledButton>
+          </Link>
+          <StyledButton onClick={handleExportToCSV} style={{backgroundColor: '#222'}}>
+            Exportar a CSV
+          </StyledButton>
+        </ActionsContainer>
+      )}
+      
       <SearchContainer>
         <FilterSection>
           <FilterItem>
@@ -437,7 +383,7 @@ const Dashboard = () => {
               type="text"
               id="searchTerm"
               name="searchTerm"
-              value={localFilters.searchTerm}
+              value={localFilters.searchTerm || ''}
               onChange={handleInputChange}
               placeholder="Escribe para buscar..."
             />
@@ -448,7 +394,7 @@ const Dashboard = () => {
             <Select
               id="category"
               name="category"
-              value={localFilters.category}
+              value={localFilters.category || ''}
               onChange={handleInputChange}
             >
               <option value="">Todas las categorías</option>
@@ -463,7 +409,7 @@ const Dashboard = () => {
             <Select
               id="color"
               name="color"
-              value={localFilters.color}
+              value={localFilters.color || ''}
               onChange={handleInputChange}
             >
               <option value="">Todos los colores</option>
@@ -481,7 +427,7 @@ const Dashboard = () => {
               type="number"
               id="minPrice"
               name="minPrice"
-              value={localFilters.minPrice}
+              value={localFilters.minPrice || ''}
               onChange={handleInputChange}
               placeholder="Mínimo"
             />
@@ -493,40 +439,31 @@ const Dashboard = () => {
               type="number"
               id="maxPrice"
               name="maxPrice"
-              value={localFilters.maxPrice}
+              value={localFilters.maxPrice || ''}
               onChange={handleInputChange}
               placeholder="Máximo"
             />
           </FilterItem>
         </FilterSection>
         
-        <StyledButton primary onClick={handleSearch}>Buscar</StyledButton>
-        <StyledButton onClick={handleReset} style={{marginLeft: '10px', backgroundColor: '#f44336'}}>
-          Reiniciar filtros
-        </StyledButton>
+        <Checkbox>
+          <input
+            type="checkbox"
+            id="inStock"
+            name="inStock"
+            checked={localFilters.inStock || false}
+            onChange={handleInputChange}
+          />
+          <label htmlFor="inStock">Mostrar solo productos con stock</label>
+        </Checkbox>
+        
+        <div style={{ marginTop: '20px' }}>
+          <StyledButton primary onClick={handleSearch}>Buscar</StyledButton>
+          <StyledButton onClick={handleReset} style={{marginLeft: '10px', backgroundColor: '#f44336'}}>
+            Reiniciar filtros
+          </StyledButton>
+        </div>
       </SearchContainer>
-    );
-  };
-
-  // Renderizado del componente principal
-  return (
-    <Container>
-      <DashboardHeader>
-        <Title>Sistema de Inventario</Title>
-      </DashboardHeader>
-      
-      {isAdmin && (
-        <ActionsContainer>
-          <StyledButton primary onClick={handleCreateProduct}>
-            Crear Nuevo Producto
-          </StyledButton>
-          <StyledButton onClick={handleExportToCSV} style={{backgroundColor: '#222'}}>
-            Exportar a CSV
-          </StyledButton>
-        </ActionsContainer>
-      )}
-      
-      <SearchFilters />
       
       {error && <ErrorMessage>{error}</ErrorMessage>}
       
@@ -544,7 +481,6 @@ const Dashboard = () => {
                 <ProductCard 
                   key={product._id} 
                   product={product} 
-                  onEdit={isAdmin ? handleEditProduct : null} 
                   onDelete={isAdmin ? handleDeleteClick : null}
                   isAdmin={isAdmin}
                 />
@@ -559,29 +495,24 @@ const Dashboard = () => {
       )}
       
       {isAdmin && (
-        <>
-          <Modal 
-            isOpen={isProductModalOpen}
-            title={currentProduct ? 'Editar Producto' : 'Crear Nuevo Producto'}
-            onClose={() => setIsProductModalOpen(false)}
-          >
-            <ProductForm 
-              product={currentProduct}
-              onSave={handleSaveProduct}
-              onCancel={() => setIsProductModalOpen(false)}
-            />
-          </Modal>
-          
-          <ConfirmDialog 
-            isOpen={isDeleteModalOpen}
-            title="Confirmar Eliminación"
-            message="¿Estás seguro de que deseas eliminar este producto?"
-            onConfirm={confirmDelete}
-            onCancel={() => setIsDeleteModalOpen(false)}
-          />
-        </>
+        <ConfirmDialog 
+          isOpen={isDeleteModalOpen}
+          title="Confirmar Eliminación"
+          message="¿Estás seguro de que deseas eliminar este producto? Esta acción no se puede deshacer."
+          onConfirm={confirmDelete}
+          onCancel={() => setIsDeleteModalOpen(false)}
+        />
       )}
     </Container>
+  );
+};
+
+// Componente Dashboard que envuelve el contenido con el contexto de productos
+const Dashboard = () => {
+  return (
+    <ProductProvider>
+      <DashboardContent />
+    </ProductProvider>
   );
 };
 

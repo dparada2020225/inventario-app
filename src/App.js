@@ -6,6 +6,7 @@ import Dashboard from './pages/Dashboard/Dashboard';
 import Login from './pages/Login/Login';
 import Register from './pages/Register/Register';
 import UserManagement from './pages/Admin/UserManagement';
+import TransactionsPage from './pages/Transactions/TransactionsPage';
 import Header from './components/Header/Header';
 import ProtectedRoute from './components/ProtectedRoute/ProtectedRoute';
 import { theme } from './theme';
@@ -48,6 +49,7 @@ function App() {
             <Route element={<ProtectedRoute requireAdmin={true} />}>
               <Route path="/admin/users" element={<UserManagement />} />
               <Route path="/admin/users/new" element={<Register />} />
+              <Route path="/admin/transactions" element={<TransactionsPage />} />
             </Route>
             
             {/* Ruta 404 */}

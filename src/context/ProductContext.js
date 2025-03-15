@@ -1,3 +1,4 @@
+// src/context/ProductContext.js
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import { productService } from '../services/api';
 
@@ -13,7 +14,8 @@ export const ProductProvider = ({ children }) => {
     category: '',
     color: '',
     minPrice: '',
-    maxPrice: ''
+    maxPrice: '',
+    inStock: false // Nuevo filtro para productos en stock
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -23,9 +25,8 @@ export const ProductProvider = ({ children }) => {
     try {
       setLoading(true);
       const data = await productService.getAllProducts();
-      console.log('Productos cargados:', data); // Añadir esto
       setProducts(data);
-      setFilteredProducts(data);
+      applyFilters(data, filters);
       setError(null);
     } catch (err) {
       setError('Error al cargar productos');
@@ -42,13 +43,13 @@ export const ProductProvider = ({ children }) => {
 
   // Aplicar filtros cuando cambien los productos o los filtros
   useEffect(() => {
-    applyFilters();
+    applyFilters(products, filters);
   }, [filters, products]);
 
-  const applyFilters = () => {
-    const { searchTerm, category, color, minPrice, maxPrice } = filters;
+  const applyFilters = (productsList, currentFilters) => {
+    const { searchTerm, category, color, minPrice, maxPrice, inStock } = currentFilters;
     
-    const filtered = products.filter(product => {
+    const filtered = productsList.filter(product => {
       // Filtro por texto de búsqueda
       if (searchTerm && !product.name.toLowerCase().includes(searchTerm.toLowerCase())) {
         return false;
@@ -65,11 +66,16 @@ export const ProductProvider = ({ children }) => {
       }
       
       // Filtro por precio
-      const price = parseFloat(product.price);
+      const price = parseFloat(product.salePrice);
       if (minPrice && price < parseFloat(minPrice)) {
         return false;
       }
       if (maxPrice && price > parseFloat(maxPrice)) {
+        return false;
+      }
+      
+      // Filtro por stock
+      if (inStock && product.stock <= 0) {
         return false;
       }
       
@@ -79,21 +85,7 @@ export const ProductProvider = ({ children }) => {
     setFilteredProducts(filtered);
   };
 
-  const addProduct = async (product) => {
-    setLoading(true);
-    try {
-      const newProduct = await productService.createProduct(product);
-      setProducts([...products, newProduct]);
-      return newProduct;
-    } catch (err) {
-      setError('Error al añadir producto');
-      console.error(err);
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  };
-
+  // Actualizar productos (ahora principalmente para actualizar la imagen)
   const updateProduct = async (updatedProduct) => {
     setLoading(true);
     try {
@@ -147,7 +139,6 @@ export const ProductProvider = ({ children }) => {
       loading,
       error,
       setFilters,
-      addProduct,
       updateProduct,
       deleteProduct,
       exportToCSV,

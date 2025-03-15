@@ -96,7 +96,7 @@ const DropdownContent = styled.div`
   position: absolute;
   right: 0;
   background-color: #f9f9f9;
-  min-width: 180px;
+  min-width: 220px;
   box-shadow: ${props => props.theme.shadows.medium};
   z-index: 1;
   border-radius: 4px;
@@ -114,6 +114,12 @@ const DropdownItem = styled.a`
   &:hover {
     background-color: #f1f1f1;
   }
+`;
+
+const DropdownDivider = styled.div`
+  height: 1px;
+  background-color: #ddd;
+  margin: 5px 0;
 `;
 
 const Badge = styled.span`
@@ -166,7 +172,13 @@ const Header = () => {
           {isAuthenticated ? (
             <>
               <NavLink to="/">Productos</NavLink>
-              {isAdmin && <NavLink to="/admin/users">Usuarios</NavLink>}
+              
+              {isAdmin && (
+                <>
+                  <NavLink to="/admin/transactions">Compras/Ventas</NavLink>
+                  <NavLink to="/admin/users">Usuarios</NavLink>
+                </>
+              )}
               
               <Dropdown ref={dropdownRef}>
                 <DropdownButton onClick={toggleDropdown}>
@@ -175,9 +187,15 @@ const Header = () => {
                 </DropdownButton>
                 <DropdownContent isOpen={dropdownOpen}>
                   {isAdmin && (
-                    <DropdownItem as={Link} to="/admin/users/new" onClick={() => setDropdownOpen(false)}>
-                      Crear Usuario
-                    </DropdownItem>
+                    <>
+                      <DropdownItem as={Link} to="/admin/users/new" onClick={() => setDropdownOpen(false)}>
+                        Crear Usuario
+                      </DropdownItem>
+                      <DropdownItem as={Link} to="/admin/transactions" onClick={() => setDropdownOpen(false)}>
+                        Administrar Transacciones
+                      </DropdownItem>
+                      <DropdownDivider />
+                    </>
                   )}
                   <DropdownItem onClick={handleLogout}>Cerrar Sesión</DropdownItem>
                 </DropdownContent>
