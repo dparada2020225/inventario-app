@@ -46,6 +46,7 @@ const Input = styled.input`
     box-shadow: 0 0 0 2px rgba(150, 255, 0, 0.2);
   }
 `;
+
 const ErrorMessage = styled.div`
   color: ${props => props.theme.colors.danger};
   font-size: 0.8rem;
@@ -105,20 +106,20 @@ const CustomFileButton = styled.label`
 `;
 
 const FileDisplay = styled.div`
-padding: 8px;
-background-color: #f8f8f8;
-border: 1px solid #ddd;
-border-radius: 6px;
-font-size: 12px;
-color: #666;
-overflow: hidden;
-text-overflow: ellipsis;
-white-space: nowrap;
+  padding: 8px;
+  background-color: #f8f8f8;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 12px;
+  color: #666;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 
-&::before {
-  content: "📄";
-  margin-right: 5px;
-}
+  &::before {
+    content: "📄";
+    margin-right: 5px;
+  }
 `;
 
 const HiddenInput = styled.input`
@@ -131,7 +132,7 @@ const HiddenInput = styled.input`
 const ImagePreview = styled.div`
   margin: 15px auto;
   width: 100%;
-  max-width: 300px; // Aumentar el tamaño (era 150px)
+  max-width: 300px;
   border-radius: 8px;
   overflow: hidden;
   box-shadow: 0 3px 15px rgba(0,0,0,0.1);
@@ -140,7 +141,7 @@ const ImagePreview = styled.div`
     width: 100%;
     height: auto;
     display: block;
-    max-height: 300px; // Altura máxima controlada
+    max-height: 300px;
     object-fit: contain;
   }
 `;
@@ -159,7 +160,7 @@ const ButtonContainer = styled.div`
 `;
 
 const ActionButton = styled.button`
-  padding: 10px 18px;  // Reducido desde 12px 24px
+  padding: 10px 18px;
   border-radius: 6px;
   font-weight: 600;
   cursor: pointer;
@@ -191,7 +192,32 @@ const CancelButton = styled(ActionButton)`
   }
 `;
 
-const API_URL = process.env.REACT_APP_API_URL || 'https://inventario-server.vercel.app';
+const DetailedErrorContainer = styled.div`
+  margin-top: 10px;
+  padding: 10px;
+  background-color: #fff8f8;
+  border-radius: 4px;
+  border-left: 3px solid ${props => props.theme.colors.danger};
+`;
+
+const DetailedErrorTitle = styled.div`
+  font-weight: bold;
+  margin-bottom: 5px;
+  color: ${props => props.theme.colors.danger};
+`;
+
+const DetailedErrorContent = styled.pre`
+  overflow: auto;
+  max-height: 150px;
+  font-size: 12px;
+  background-color: #f5f5f5;
+  padding: 8px;
+  border-radius: 4px;
+  white-space: pre-wrap;
+  word-break: break-word;
+`;
+
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
 const ProductForm = ({ product, onSave, onCancel }) => {
   const [formData, setFormData] = useState({
@@ -199,7 +225,9 @@ const ProductForm = ({ product, onSave, onCancel }) => {
     name: '',
     category: '',
     color: '',
-    price: '',
+    salePrice: '',
+    stock: 0,
+    lastPurchasePrice: 0,
     image: null
   });
   
@@ -207,15 +235,19 @@ const ProductForm = ({ product, onSave, onCancel }) => {
   const [previewUrl, setPreviewUrl] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [detailedError, setDetailedError] = useState(null);
 
   useEffect(() => {
     if (product) {
+      // Mapeo correcto de los campos del producto
       setFormData({
         _id: product._id || '',
         name: product.name || '',
         category: product.category || '',
         color: product.color || '',
-        price: product.price || '',
+        salePrice: product.salePrice || '',
+        stock: product.stock || 0,
+        lastPurchasePrice: product.lastPurchasePrice || 0,
         image: product.image || null
       });
       
@@ -269,36 +301,76 @@ const ProductForm = ({ product, onSave, onCancel }) => {
     }
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
+// Función handleSubmit corregida para el componente ProductForm
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  setLoading(true);
+  setError('');
+  setDetailedError(null);
+  
+  try {
+    let imageId = formData.image;
     
-    try {
-      let imageId = formData.image;
+    // Si hay un archivo seleccionado, subirlo primero
+    if (selectedFile) {
+      const formDataFile = new FormData();
+      formDataFile.append('image', selectedFile);
       
-      // Si hay un archivo seleccionado, subirlo primero
-      if (selectedFile) {
-        const formDataFile = new FormData();
-        formDataFile.append('image', selectedFile);
-        
+      try {
+        console.log('Subiendo imagen...');
         const uploadResponse = await axios.post(`${API_URL}/upload`, formDataFile);
+        console.log('Respuesta de subida de imagen:', uploadResponse.data);
         imageId = uploadResponse.data.imageId;
+      } catch (imageError) {
+        console.error('Error al subir imagen:', imageError);
+        console.log('Respuesta de error imagen:', imageError.response?.data);
+        setDetailedError({
+          message: 'Error al subir imagen',
+          details: imageError.response?.data || imageError.message,
+          status: imageError.response?.status,
+          statusText: imageError.response?.statusText
+        });
+        setError('Error al subir imagen. Intenta con otra imagen o más tarde.');
+        setLoading(false);
+        return;
       }
-      
-      // Después guardar el producto con la referencia a la imagen
-      const productData = {
-        ...formData,
-        price: parseFloat(formData.price),
-        image: imageId
-      };
-      
-      onSave(productData);
-    } catch (error) {
-      console.error('Error al guardar producto:', error);
-      setError('Error al guardar producto. Inténtalo de nuevo.');
-      setLoading(false);
     }
-  };
+    
+    // Preparar los datos del producto asegurándose de que los tipos sean correctos
+    const productData = {
+      // Si estamos editando, incluimos el _id, si estamos creando, lo omitimos
+      ...(formData._id ? { _id: formData._id } : {}),
+      name: formData.name,
+      category: formData.category,
+      color: formData.color,
+      salePrice: parseFloat(formData.salePrice) || 0,
+      stock: parseInt(formData.stock, 10) || 0,
+      lastPurchasePrice: parseFloat(formData.lastPurchasePrice) || 0,
+      image: imageId
+    };
+    
+    console.log('Enviando datos del producto:', productData);
+    
+    // Luego enviamos el producto completo usando la función onSave proporcionada
+    await onSave(productData);
+  } catch (error) {
+    console.error('Error al guardar producto:', error);
+    
+    // Mostrar información detallada del error
+    const errorResponse = error.response?.data;
+    console.log('Respuesta de error:', errorResponse);
+    
+    setError('Error al guardar producto. Verifica todos los campos e intenta nuevamente.');
+    setDetailedError({
+      message: 'Error detallado al guardar producto',
+      details: errorResponse || error.message,
+      status: error.response?.status,
+      statusText: error.response?.statusText
+    });
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <Form onSubmit={handleSubmit}>
@@ -341,14 +413,42 @@ const ProductForm = ({ product, onSave, onCancel }) => {
       </FormGroup>
       
       <FormGroup>
-        <Label htmlFor="price">Precio:</Label>
+        <Label htmlFor="salePrice">Precio de Venta:</Label>
         <Input
           type="number"
-          id="price"
-          name="price"
+          id="salePrice"
+          name="salePrice"
           step="0.01"
           min="0"
-          value={formData.price}
+          value={formData.salePrice}
+          onChange={handleChange}
+          required
+        />
+      </FormGroup>
+      
+      <FormGroup>
+        <Label htmlFor="stock">Stock:</Label>
+        <Input
+          type="number"
+          id="stock"
+          name="stock"
+          step="1"
+          min="0"
+          value={formData.stock}
+          onChange={handleChange}
+          required
+        />
+      </FormGroup>
+      
+      <FormGroup>
+        <Label htmlFor="lastPurchasePrice">Precio de Compra:</Label>
+        <Input
+          type="number"
+          id="lastPurchasePrice"
+          name="lastPurchasePrice"
+          step="0.01"
+          min="0"
+          value={formData.lastPurchasePrice}
           onChange={handleChange}
           required
         />
@@ -372,6 +472,16 @@ const ProductForm = ({ product, onSave, onCancel }) => {
         </FileInputContainer>
         
         {error && <ErrorMessage>{error}</ErrorMessage>}
+        
+        {detailedError && (
+          <DetailedErrorContainer>
+            <DetailedErrorTitle>{detailedError.message}</DetailedErrorTitle>
+            <DetailedErrorContent>
+              {JSON.stringify(detailedError.details, null, 2)}
+              {detailedError.status && `\nStatus: ${detailedError.status} ${detailedError.statusText}`}
+            </DetailedErrorContent>
+          </DetailedErrorContainer>
+        )}
         
         {previewUrl && (
           <ImagePreview>

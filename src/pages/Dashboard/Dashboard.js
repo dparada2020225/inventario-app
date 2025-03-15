@@ -4,6 +4,7 @@ import styled, { keyframes } from 'styled-components';
 import { ProductProvider, useProducts } from '../../context/ProductContext';
 import ProductCard from '../../components/ProductCard/ProductCard';
 import Modal from '../../components/Modal/Modal';
+import ProductForm from '../../components/ProductForm/ProductForm';
 import ConfirmDialog from '../../components/ConfirmDialog/ConfirmDialog';
 import { useAuth } from '../../context/AuthContext';
 import { Link } from 'react-router-dom';
@@ -285,6 +286,8 @@ const DashboardContent = () => {
   
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [productToDelete, setProductToDelete] = useState(null);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [productToEdit, setProductToEdit] = useState(null);
   
   // Usar el contexto de autenticación
   const { isAdmin } = useAuth();
@@ -344,6 +347,47 @@ const DashboardContent = () => {
       console.error("Error al exportar a CSV:", err);
     }
   };
+
+  const handleCreateProduct = () => {
+    setProductToEdit(null);
+    setIsCreateModalOpen(true);
+  };
+
+  const handleEditProduct = (product) => {
+    setProductToEdit(product);
+    setIsCreateModalOpen(true);
+  };
+
+  const handleSaveProduct = async (productData) => {
+    try {
+      console.log('Datos del producto a guardar:', productData);
+      
+      if (productData._id) {
+        // Actualizar producto existente
+        console.log('Actualizando producto existente con ID:', productData._id);
+        const updatedProduct = await productService.updateProduct(productData._id, productData);
+        console.log('Producto actualizado correctamente:', updatedProduct);
+      } else {
+        // Crear nuevo producto - asegurarse de que no enviamos _id vacío
+        console.log('Creando nuevo producto');
+        // Clonar el objeto para evitar referencias
+        const newProductData = { ...productData };
+        // Eliminar explícitamente el _id si existe y está vacío
+        delete newProductData._id;
+        const newProduct = await productService.createProduct(newProductData);
+        console.log('Nuevo producto creado:', newProduct);
+      }
+      
+      setIsCreateModalOpen(false);
+      refreshProducts(); // Recargar la lista de productos
+      return true;
+    } catch (error) {
+      console.error("Error al guardar producto:", error);
+      console.log("Detalles del error:", error.response?.data);
+      // No cerramos el modal para que el usuario pueda ver el error y corregirlo
+      return false;
+    }
+  };
   
   // Renderizar el componente
   return (
@@ -364,14 +408,19 @@ const DashboardContent = () => {
       
       {isAdmin && (
         <ActionsContainer>
-          <Link to="/admin/transactions" style={{ textDecoration: 'none' }}>
-            <StyledButton primary>
-              Ir a Compras/Ventas
-            </StyledButton>
-          </Link>
-          <StyledButton onClick={handleExportToCSV} style={{backgroundColor: '#222'}}>
-            Exportar a CSV
+          <StyledButton primary onClick={handleCreateProduct}>
+            Crear Nuevo Producto
           </StyledButton>
+          <div>
+            <Link to="/admin/transactions" style={{ textDecoration: 'none' }}>
+              <StyledButton primary style={{marginRight: '10px'}}>
+                Ir a Compras/Ventas
+              </StyledButton>
+            </Link>
+            <StyledButton onClick={handleExportToCSV} style={{backgroundColor: '#222'}}>
+              Exportar a CSV
+            </StyledButton>
+          </div>
         </ActionsContainer>
       )}
       
@@ -482,6 +531,7 @@ const DashboardContent = () => {
                   key={product._id} 
                   product={product} 
                   onDelete={isAdmin ? handleDeleteClick : null}
+                  onEdit={isAdmin ? handleEditProduct : null}
                   isAdmin={isAdmin}
                 />
               ))
@@ -495,13 +545,27 @@ const DashboardContent = () => {
       )}
       
       {isAdmin && (
-        <ConfirmDialog 
-          isOpen={isDeleteModalOpen}
-          title="Confirmar Eliminación"
-          message="¿Estás seguro de que deseas eliminar este producto? Esta acción no se puede deshacer."
-          onConfirm={confirmDelete}
-          onCancel={() => setIsDeleteModalOpen(false)}
-        />
+        <>
+          <ConfirmDialog 
+            isOpen={isDeleteModalOpen}
+            title="Confirmar Eliminación"
+            message="¿Estás seguro de que deseas eliminar este producto? Esta acción no se puede deshacer."
+            onConfirm={confirmDelete}
+            onCancel={() => setIsDeleteModalOpen(false)}
+          />
+          
+          <Modal
+            isOpen={isCreateModalOpen}
+            title={productToEdit ? "Editar Producto" : "Crear Nuevo Producto"}
+            onClose={() => setIsCreateModalOpen(false)}
+          >
+            <ProductForm 
+              product={productToEdit}
+              onSave={handleSaveProduct}
+              onCancel={() => setIsCreateModalOpen(false)}
+            />
+          </Modal>
+        </>
       )}
     </Container>
   );

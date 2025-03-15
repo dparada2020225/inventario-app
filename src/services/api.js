@@ -1,7 +1,7 @@
 // src/services/api.js
 import axios from 'axios';
 
-const API_URL = process.env.REACT_APP_API_URL || 'https://inventario-server.vercel.app';
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
 // Interceptor para añadir el token a todas las solicitudes
 axios.interceptors.request.use(
@@ -21,10 +21,13 @@ export const productService = {
   // Obtener todos los productos
   getAllProducts: async () => {
     try {
+      console.log('Obteniendo todos los productos...');
       const response = await axios.get(`${API_URL}/api/products`);
+      console.log('Productos obtenidos:', response.data.length);
       return response.data;
     } catch (error) {
       console.error('Error fetching products:', error);
+      console.log('Detalles del error:', error.response?.data);
       throw error;
     }
   },
@@ -32,10 +35,13 @@ export const productService = {
   // Crear un nuevo producto
   createProduct: async (productData) => {
     try {
+      console.log('Creando nuevo producto con datos:', productData);
       const response = await axios.post(`${API_URL}/api/products`, productData);
+      console.log('Producto creado con éxito:', response.data);
       return response.data;
     } catch (error) {
       console.error('Error creating product:', error);
+      console.log('Respuesta de error:', error.response?.data);
       throw error;
     }
   },
@@ -43,10 +49,13 @@ export const productService = {
   // Actualizar un producto existente
   updateProduct: async (id, productData) => {
     try {
+      console.log(`Actualizando producto ${id} con datos:`, productData);
       const response = await axios.put(`${API_URL}/api/products/${id}`, productData);
+      console.log('Producto actualizado con éxito:', response.data);
       return response.data;
     } catch (error) {
       console.error('Error updating product:', error);
+      console.log('Respuesta de error:', error.response?.data);
       throw error;
     }
   },
@@ -54,10 +63,13 @@ export const productService = {
   // Eliminar un producto
   deleteProduct: async (id) => {
     try {
+      console.log(`Eliminando producto con ID: ${id}`);
       await axios.delete(`${API_URL}/api/products/${id}`);
+      console.log('Producto eliminado con éxito');
       return true;
     } catch (error) {
       console.error('Error deleting product:', error);
+      console.log('Respuesta de error:', error.response?.data);
       throw error;
     }
   },
@@ -65,6 +77,7 @@ export const productService = {
   // Exportar a CSV
   exportToCSV: async () => {
     try {
+      console.log('Exportando productos a CSV...');
       const response = await axios.get(`${API_URL}/api/products/export-csv`, {
         responseType: 'blob'
       });
@@ -78,9 +91,11 @@ export const productService = {
       link.click();
       link.remove();
       
+      console.log('CSV exportado correctamente');
       return true;
     } catch (error) {
       console.error('Error exporting to CSV:', error);
+      console.log('Respuesta de error:', error.response?.data);
       throw error;
     }
   },
@@ -88,6 +103,7 @@ export const productService = {
   // Subir imagen
   uploadImage: async (file) => {
     try {
+      console.log('Subiendo imagen:', file.name);
       const formData = new FormData();
       formData.append('image', file);
       
@@ -97,9 +113,11 @@ export const productService = {
         }
       });
       
+      console.log('Imagen subida correctamente:', response.data);
       return response.data;
     } catch (error) {
       console.error('Error uploading image:', error);
+      console.log('Respuesta de error:', error.response?.data);
       throw error;
     }
   }
@@ -110,10 +128,13 @@ export const purchaseService = {
   // Obtener todas las compras
   getAllPurchases: async () => {
     try {
+      console.log('Obteniendo todas las compras...');
       const response = await axios.get(`${API_URL}/api/purchases`);
+      console.log('Compras obtenidas:', response.data.length);
       return response.data;
     } catch (error) {
       console.error('Error fetching purchases:', error);
+      console.log('Detalles del error:', error.response?.data);
       throw error;
     }
   },
@@ -121,10 +142,13 @@ export const purchaseService = {
   // Obtener una compra por ID
   getPurchaseById: async (id) => {
     try {
+      console.log(`Obteniendo compra con ID: ${id}`);
       const response = await axios.get(`${API_URL}/api/purchases/${id}`);
+      console.log('Compra obtenida:', response.data);
       return response.data;
     } catch (error) {
       console.error('Error fetching purchase:', error);
+      console.log('Detalles del error:', error.response?.data);
       throw error;
     }
   },
@@ -132,10 +156,13 @@ export const purchaseService = {
   // Crear una nueva compra
   createPurchase: async (purchaseData) => {
     try {
+      console.log('Creando nueva compra con datos:', purchaseData);
       const response = await axios.post(`${API_URL}/api/purchases`, purchaseData);
+      console.log('Compra creada con éxito:', response.data);
       return response.data;
     } catch (error) {
       console.error('Error creating purchase:', error);
+      console.log('Detalles del error:', error.response?.data);
       throw error;
     }
   }
@@ -146,10 +173,13 @@ export const saleService = {
   // Obtener todas las ventas
   getAllSales: async () => {
     try {
+      console.log('Obteniendo todas las ventas...');
       const response = await axios.get(`${API_URL}/api/sales`);
+      console.log('Ventas obtenidas:', response.data.length);
       return response.data;
     } catch (error) {
       console.error('Error fetching sales:', error);
+      console.log('Detalles del error:', error.response?.data);
       throw error;
     }
   },
@@ -157,10 +187,13 @@ export const saleService = {
   // Obtener una venta por ID
   getSaleById: async (id) => {
     try {
+      console.log(`Obteniendo venta con ID: ${id}`);
       const response = await axios.get(`${API_URL}/api/sales/${id}`);
+      console.log('Venta obtenida:', response.data);
       return response.data;
     } catch (error) {
       console.error('Error fetching sale:', error);
+      console.log('Detalles del error:', error.response?.data);
       throw error;
     }
   },
@@ -168,10 +201,13 @@ export const saleService = {
   // Crear una nueva venta
   createSale: async (saleData) => {
     try {
+      console.log('Creando nueva venta con datos:', saleData);
       const response = await axios.post(`${API_URL}/api/sales`, saleData);
+      console.log('Venta creada con éxito:', response.data);
       return response.data;
     } catch (error) {
       console.error('Error creating sale:', error);
+      console.log('Detalles del error:', error.response?.data);
       throw error;
     }
   }
@@ -182,14 +218,17 @@ export const authService = {
   // Iniciar sesión
   login: async (credentials) => {
     try {
+      console.log('Iniciando sesión...');
       const response = await axios.post(`${API_URL}/api/auth/login`, credentials);
       if (response.data.token) {
         localStorage.setItem('token', response.data.token);
         axios.defaults.headers.common['Authorization'] = `Bearer ${response.data.token}`;
       }
+      console.log('Sesión iniciada con éxito');
       return response.data;
     } catch (error) {
       console.error('Error logging in:', error);
+      console.log('Detalles del error:', error.response?.data);
       throw error;
     }
   },
@@ -197,10 +236,13 @@ export const authService = {
   // Registrar usuario
   register: async (userData) => {
     try {
+      console.log('Registrando nuevo usuario:', userData.username);
       const response = await axios.post(`${API_URL}/api/auth/register`, userData);
+      console.log('Usuario registrado con éxito');
       return response.data;
     } catch (error) {
       console.error('Error registering user:', error);
+      console.log('Detalles del error:', error.response?.data);
       throw error;
     }
   },
@@ -208,10 +250,13 @@ export const authService = {
   // Obtener información del usuario actual
   getCurrentUser: async () => {
     try {
+      console.log('Obteniendo información del usuario actual...');
       const response = await axios.get(`${API_URL}/api/auth/me`);
+      console.log('Información de usuario obtenida');
       return response.data;
     } catch (error) {
       console.error('Error getting current user:', error);
+      console.log('Detalles del error:', error.response?.data);
       throw error;
     }
   },
@@ -219,18 +264,23 @@ export const authService = {
   // Obtener todos los usuarios (solo para admin)
   getAllUsers: async () => {
     try {
+      console.log('Obteniendo todos los usuarios...');
       const response = await axios.get(`${API_URL}/api/auth/users`);
+      console.log('Usuarios obtenidos:', response.data.length);
       return response.data;
     } catch (error) {
       console.error('Error getting all users:', error);
+      console.log('Detalles del error:', error.response?.data);
       throw error;
     }
   },
   
   // Cerrar sesión
   logout: () => {
+    console.log('Cerrando sesión...');
     localStorage.removeItem('token');
     delete axios.defaults.headers.common['Authorization'];
+    console.log('Sesión cerrada');
   }
 };
 

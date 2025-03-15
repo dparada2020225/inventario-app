@@ -14,7 +14,7 @@ export const AuthProvider = ({ children }) => {
   const [error, setError] = useState(null);
   const navigate = useNavigate();
   
-  const API_URL = process.env.REACT_APP_API_URL || 'https://inventario-server.vercel.app';
+  const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
   // Configurar el token en los headers por defecto
   useEffect(() => {
