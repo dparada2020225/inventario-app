@@ -3,8 +3,13 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { createGlobalStyle, ThemeProvider } from 'styled-components';
 import Dashboard from './pages/Dashboard/Dashboard';
-import Header from './components/Header/Header'; // Importar el componente Header
+import Login from './pages/Login/Login';
+import Register from './pages/Register/Register';
+import UserManagement from './pages/Admin/UserManagement';
+import Header from './components/Header/Header';
+import ProtectedRoute from './components/ProtectedRoute/ProtectedRoute';
 import { theme } from './theme';
+import { AuthProvider } from './context/AuthContext';
 
 const GlobalStyle = createGlobalStyle`
   body {
@@ -27,12 +32,28 @@ function App() {
   return (
     <ThemeProvider theme={theme}>
       <Router>
-        <GlobalStyle />
-        <Header /> {/* Usar el componente Header externo */}
-        <Routes>
-          <Route path="/" element={<Dashboard />} />
-          <Route path="*" element={<div style={{padding: '40px', textAlign: 'center'}}>Página no encontrada</div>} />
-        </Routes>
+        <AuthProvider>
+          <GlobalStyle />
+          <Header />
+          <Routes>
+            {/* Rutas públicas */}
+            <Route path="/login" element={<Login />} />
+            
+            {/* Rutas protegidas (requieren autenticación) */}
+            <Route element={<ProtectedRoute />}>
+              <Route path="/" element={<Dashboard />} />
+            </Route>
+            
+            {/* Rutas solo para admin */}
+            <Route element={<ProtectedRoute requireAdmin={true} />}>
+              <Route path="/admin/users" element={<UserManagement />} />
+              <Route path="/admin/users/new" element={<Register />} />
+            </Route>
+            
+            {/* Ruta 404 */}
+            <Route path="*" element={<div style={{padding: '40px', textAlign: 'center'}}>Página no encontrada</div>} />
+          </Routes>
+        </AuthProvider>
       </Router>
     </ThemeProvider>
   );

@@ -8,6 +8,7 @@ import ProductForm from '../../components/ProductForm/ProductForm';
 import Modal from '../../components/Modal/Modal';
 import ConfirmDialog from '../../components/ConfirmDialog/ConfirmDialog';
 import ProductCard from '../../components/ProductCard/ProductCard';
+import { useAuth } from '../../context/AuthContext';
 
 // Definición de la URL de la API
 const API_URL = process.env.REACT_APP_API_URL || 'https://inventario-server.vercel.app';
@@ -113,6 +114,12 @@ const StyledButton = styled.button`
   &:active {
     transform: translateY(1px);
     box-shadow: ${props => props.theme.shadows.small};
+  }
+  
+  &:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+    transform: none;
   }
 `;
 
@@ -246,6 +253,9 @@ const Dashboard = () => {
     minPrice: '',
     maxPrice: ''
   });
+
+  // Usar el contexto de autenticación
+  const { isAdmin } = useAuth();
 
   // Cargar productos al iniciar
   useEffect(() => {
@@ -505,14 +515,16 @@ const Dashboard = () => {
         <Title>Sistema de Inventario</Title>
       </DashboardHeader>
       
-      <ActionsContainer>
-        <StyledButton primary onClick={handleCreateProduct}>
-          Crear Nuevo Producto
-        </StyledButton>
-        <StyledButton onClick={handleExportToCSV} style={{backgroundColor: '#222'}}>
-          Exportar a CSV
-        </StyledButton>
-      </ActionsContainer>
+      {isAdmin && (
+        <ActionsContainer>
+          <StyledButton primary onClick={handleCreateProduct}>
+            Crear Nuevo Producto
+          </StyledButton>
+          <StyledButton onClick={handleExportToCSV} style={{backgroundColor: '#222'}}>
+            Exportar a CSV
+          </StyledButton>
+        </ActionsContainer>
+      )}
       
       <SearchFilters />
       
@@ -532,8 +544,9 @@ const Dashboard = () => {
                 <ProductCard 
                   key={product._id} 
                   product={product} 
-                  onEdit={handleEditProduct} 
-                  onDelete={handleDeleteClick}
+                  onEdit={isAdmin ? handleEditProduct : null} 
+                  onDelete={isAdmin ? handleDeleteClick : null}
+                  isAdmin={isAdmin}
                 />
               ))
             ) : (
@@ -545,25 +558,29 @@ const Dashboard = () => {
         </>
       )}
       
-      <Modal 
-        isOpen={isProductModalOpen}
-        title={currentProduct ? 'Editar Producto' : 'Crear Nuevo Producto'}
-        onClose={() => setIsProductModalOpen(false)}
-      >
-        <ProductForm 
-          product={currentProduct}
-          onSave={handleSaveProduct}
-          onCancel={() => setIsProductModalOpen(false)}
-        />
-      </Modal>
-      
-      <ConfirmDialog 
-        isOpen={isDeleteModalOpen}
-        title="Confirmar Eliminación"
-        message="¿Estás seguro de que deseas eliminar este producto?"
-        onConfirm={confirmDelete}
-        onCancel={() => setIsDeleteModalOpen(false)}
-      />
+      {isAdmin && (
+        <>
+          <Modal 
+            isOpen={isProductModalOpen}
+            title={currentProduct ? 'Editar Producto' : 'Crear Nuevo Producto'}
+            onClose={() => setIsProductModalOpen(false)}
+          >
+            <ProductForm 
+              product={currentProduct}
+              onSave={handleSaveProduct}
+              onCancel={() => setIsProductModalOpen(false)}
+            />
+          </Modal>
+          
+          <ConfirmDialog 
+            isOpen={isDeleteModalOpen}
+            title="Confirmar Eliminación"
+            message="¿Estás seguro de que deseas eliminar este producto?"
+            onConfirm={confirmDelete}
+            onCancel={() => setIsDeleteModalOpen(false)}
+          />
+        </>
+      )}
     </Container>
   );
 };

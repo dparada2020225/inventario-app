@@ -110,7 +110,7 @@ const ColorDot = styled.span`
 
 const API_URL = process.env.REACT_APP_API_URL || 'https://inventario-server.vercel.app';
 
-const ProductCard = ({ product, onEdit, onDelete }) => {
+const ProductCard = ({ product, onEdit, onDelete, isAdmin }) => {
   const [imageError, setImageError] = useState(false);
   const [isViewerOpen, setIsViewerOpen] = useState(false);
 
@@ -154,14 +154,16 @@ const ProductCard = ({ product, onEdit, onDelete }) => {
           Precio: Q {parseFloat(product.price).toFixed(2)}
         </ProductPrice>
         
-        <ButtonContainer>
-          <Button onClick={() => onEdit(product)}>
-            Editar
-          </Button>
-          <Button danger onClick={() => onDelete(product._id)}>
-            Eliminar
-          </Button>
-        </ButtonContainer>
+        {isAdmin && (
+          <ButtonContainer>
+            <Button onClick={() => onEdit(product)}>
+              Editar
+            </Button>
+            <Button danger onClick={() => onDelete(product._id)}>
+              Eliminar
+            </Button>
+          </ButtonContainer>
+        )}
       </Card>
 
       {/* Visor de imágenes con el nombre del producto como título */}

@@ -3,6 +3,20 @@ import axios from 'axios';
 
 const API_URL = process.env.REACT_APP_API_URL || 'https://inventario-server.vercel.app';
 
+// Interceptor para añadir el token a todas las solicitudes
+axios.interceptors.request.use(
+  config => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      config.headers['Authorization'] = `Bearer ${token}`;
+    }
+    return config;
+  },
+  error => {
+    return Promise.reject(error);
+  }
+);
+
 export const productService = {
   // Obtener todos los productos
   getAllProducts: async () => {
@@ -88,6 +102,63 @@ export const productService = {
       console.error('Error uploading image:', error);
       throw error;
     }
+  }
+};
+
+// Servicio de autenticación
+export const authService = {
+  // Iniciar sesión
+  login: async (credentials) => {
+    try {
+      const response = await axios.post(`${API_URL}/api/auth/login`, credentials);
+      if (response.data.token) {
+        localStorage.setItem('token', response.data.token);
+        axios.defaults.headers.common['Authorization'] = `Bearer ${response.data.token}`;
+      }
+      return response.data;
+    } catch (error) {
+      console.error('Error logging in:', error);
+      throw error;
+    }
+  },
+  
+  // Registrar usuario
+  register: async (userData) => {
+    try {
+      const response = await axios.post(`${API_URL}/api/auth/register`, userData);
+      return response.data;
+    } catch (error) {
+      console.error('Error registering user:', error);
+      throw error;
+    }
+  },
+  
+  // Obtener información del usuario actual
+  getCurrentUser: async () => {
+    try {
+      const response = await axios.get(`${API_URL}/api/auth/me`);
+      return response.data;
+    } catch (error) {
+      console.error('Error getting current user:', error);
+      throw error;
+    }
+  },
+  
+  // Obtener todos los usuarios (solo para admin)
+  getAllUsers: async () => {
+    try {
+      const response = await axios.get(`${API_URL}/api/auth/users`);
+      return response.data;
+    } catch (error) {
+      console.error('Error getting all users:', error);
+      throw error;
+    }
+  },
+  
+  // Cerrar sesión
+  logout: () => {
+    localStorage.removeItem('token');
+    delete axios.defaults.headers.common['Authorization'];
   }
 };
 
