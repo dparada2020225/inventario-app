@@ -191,7 +191,7 @@ const CancelButton = styled(ActionButton)`
   }
 `;
 
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+const API_URL = process.env.REACT_APP_API_URL || 'https://inventario-server.vercel.app';
 
 const ProductForm = ({ product, onSave, onCancel }) => {
   const [formData, setFormData] = useState({

@@ -10,7 +10,7 @@ import ConfirmDialog from '../../components/ConfirmDialog/ConfirmDialog';
 import ProductCard from '../../components/ProductCard/ProductCard';
 
 // Definición de la URL de la API
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+const API_URL = process.env.REACT_APP_API_URL || 'https://inventario-server.vercel.app';
 
 // Animaciones
 const fadeIn = keyframes`
