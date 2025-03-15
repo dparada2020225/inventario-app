@@ -15,7 +15,8 @@ export const ProductProvider = ({ children }) => {
     color: '',
     minPrice: '',
     maxPrice: '',
-    inStock: false // Nuevo filtro para productos en stock
+    inStock: false, // Nuevo filtro para productos en stock
+    withoutStock: false  // Añadir esta línea
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -47,7 +48,7 @@ export const ProductProvider = ({ children }) => {
   }, [filters, products]);
 
   const applyFilters = (productsList, currentFilters) => {
-    const { searchTerm, category, color, minPrice, maxPrice, inStock } = currentFilters;
+    const { searchTerm, category, color, minPrice, maxPrice, inStock, withoutStock  } = currentFilters;
     
     const filtered = productsList.filter(product => {
       // Filtro por texto de búsqueda
@@ -76,6 +77,9 @@ export const ProductProvider = ({ children }) => {
       
       // Filtro por stock
       if (inStock && product.stock <= 0) {
+        return false;
+      }
+      if (withoutStock && product.stock > 0) {
         return false;
       }
       

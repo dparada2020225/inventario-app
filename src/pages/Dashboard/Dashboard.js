@@ -293,15 +293,34 @@ const DashboardContent = () => {
   const { isAdmin } = useAuth();
   
   // Crear estado local para los filtros
-  const [localFilters, setLocalFilters] = useState({...filters});
+  const [localFilters, setLocalFilters] = useState({
+    ...filters,
+    withoutStock: false  // Añadir esta propiedad
+  });
   
   // Manejar cambios en los inputs sin aplicar los filtros inmediatamente
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setLocalFilters(prev => ({
-      ...prev, 
-      [name]: type === 'checkbox' ? checked : value
-    }));
+    
+    // Si está activando un filtro de stock, desactivar el otro
+    if (name === 'inStock' && checked) {
+      setLocalFilters(prev => ({
+        ...prev,
+        inStock: checked,
+        withoutStock: false
+      }));
+    } else if (name === 'withoutStock' && checked) {
+      setLocalFilters(prev => ({
+        ...prev,
+        withoutStock: checked,
+        inStock: false
+      }));
+    } else {
+      setLocalFilters(prev => ({
+        ...prev, 
+        [name]: type === 'checkbox' ? checked : value
+      }));
+    }
   };
   
   // Aplicar los filtros cuando se hace clic en el botón Buscar
@@ -317,7 +336,8 @@ const DashboardContent = () => {
       color: '',
       minPrice: '',
       maxPrice: '',
-      inStock: false
+      inStock: false,
+      withoutStock: false
     };
     setLocalFilters(emptyFilters);
     setFilters(emptyFilters);
@@ -399,28 +419,15 @@ const DashboardContent = () => {
         )}
       </DashboardHeader>
       
-      {isAdmin && (
-        <AdminMessage>
-          Como administrador, puedes gestionar el inventario a través de compras y ventas. 
-          Visita la sección de <Link to="/admin/transactions">Compras/Ventas</Link> para realizar transacciones.
-        </AdminMessage>
-      )}
       
       {isAdmin && (
         <ActionsContainer>
           <StyledButton primary onClick={handleCreateProduct}>
             Crear Nuevo Producto
           </StyledButton>
-          <div>
-            <Link to="/admin/transactions" style={{ textDecoration: 'none' }}>
-              <StyledButton primary style={{marginRight: '10px'}}>
-                Ir a Compras/Ventas
-              </StyledButton>
-            </Link>
-            <StyledButton onClick={handleExportToCSV} style={{backgroundColor: '#222'}}>
-              Exportar a CSV
-            </StyledButton>
-          </div>
+          <StyledButton onClick={handleExportToCSV} style={{backgroundColor: '#222'}}>
+            Exportar a CSV
+          </StyledButton>
         </ActionsContainer>
       )}
       
@@ -495,6 +502,10 @@ const DashboardContent = () => {
           </FilterItem>
         </FilterSection>
         
+        <FilterSection>
+    <FilterItem>
+      <Label>Filtrar por stock:</Label>
+      <div style={{ display: 'flex', flexDirection: 'row', gap: '8px' }}>
         <Checkbox>
           <input
             type="checkbox"
@@ -505,6 +516,19 @@ const DashboardContent = () => {
           />
           <label htmlFor="inStock">Mostrar solo productos con stock</label>
         </Checkbox>
+        <Checkbox>
+          <input
+            type="checkbox"
+            id="withoutStock"
+            name="withoutStock"
+            checked={localFilters.withoutStock || false}
+            onChange={handleInputChange}
+          />
+          <label htmlFor="withoutStock">Mostrar solo productos sin stock</label>
+        </Checkbox>
+      </div>
+    </FilterItem>
+  </FilterSection>
         
         <div style={{ marginTop: '20px' }}>
           <StyledButton primary onClick={handleSearch}>Buscar</StyledButton>
