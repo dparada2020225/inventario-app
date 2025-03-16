@@ -9,6 +9,7 @@ import ConfirmDialog from '../../components/ConfirmDialog/ConfirmDialog';
 import { useAuth } from '../../context/AuthContext';
 import { Link } from 'react-router-dom';
 import productService from '../../services/api';
+import ColorSelector from '../../components/ColorSelector/ColorSelector';
 
 // Animaciones
 const fadeIn = keyframes`
@@ -451,17 +452,13 @@ const DashboardContent = () => {
           
           <FilterItem>
             <Label htmlFor="color">Color:</Label>
-            <Select
-              id="color"
-              name="color"
+            <ColorSelector
               value={localFilters.color || ''}
-              onChange={handleInputChange}
-            >
-              <option value="">Todos los colores</option>
-              {colors.map(color => (
-                <option key={color} value={color}>{color}</option>
-              ))}
-            </Select>
+              onChange={(value) => setLocalFilters({...localFilters, color: value})}
+              availableColors={colors}
+              placeholder="Todos los colores"
+              useOnlyAvailableColors={true}
+            />
           </FilterItem>
         </FilterSection>
         

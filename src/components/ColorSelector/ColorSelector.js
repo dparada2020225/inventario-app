@@ -125,14 +125,27 @@ const commonColors = [
   { name: 'Mostaza', color: '#ffdb58' }
 ];
 
-const ColorSelector = ({ value, onChange, availableColors = [], placeholder = "Selecciona o escribe un color" }) => {
+const ColorSelector = ({ 
+  value, 
+  onChange, 
+  availableColors = [], 
+  placeholder = "Selecciona o escribe un color",
+  useOnlyAvailableColors = false 
+}) => {
   const [inputValue, setInputValue] = useState(value || '');
   const [showDropdown, setShowDropdown] = useState(false);
   const [colorPreview, setColorPreview] = useState('#cccccc');
   const containerRef = useRef(null);
   
-  // Combina los colores disponibles con los colores comunes
-  const allColors = [...new Set([...availableColors, ...commonColors.map(c => c.name)])].sort();
+  // Determinar qué colores mostrar en el dropdown
+  let allColors;
+  if (useOnlyAvailableColors) {
+    // Si useOnlyAvailableColors es true, solo usar los colores disponibles
+    allColors = [...availableColors].sort();
+  } else {
+    // Si no, combinar los colores disponibles con los colores comunes
+    allColors = [...new Set([...availableColors, ...commonColors.map(c => c.name)])].sort();
+  }
   
   // Actualiza la previsualización del color cuando cambia el valor de entrada
   useEffect(() => {
@@ -183,10 +196,16 @@ const ColorSelector = ({ value, onChange, availableColors = [], placeholder = "S
     setShowDropdown(!showDropdown);
   };
   
-  // Filtra los colores basados en el texto de entrada
+  // Filtrar los colores basados en el texto de entrada
   const filteredColors = inputValue
     ? allColors.filter(color => color.toLowerCase().includes(inputValue.toLowerCase()))
     : allColors;
+    
+  // Si no hay colores filtrados y el usuario ha escrito algo, mostrar el texto ingresado
+  // como opción (solo si no estamos restringidos a los colores disponibles)
+  if (filteredColors.length === 0 && inputValue && !useOnlyAvailableColors) {
+    filteredColors.push(inputValue);
+  }
   
   return (
     <Container ref={containerRef}>
