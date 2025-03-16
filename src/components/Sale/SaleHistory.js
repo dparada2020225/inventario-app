@@ -54,6 +54,9 @@ const NoRecords = styled.div`
   padding: 30px;
   color: ${props => props.theme.colors.textLight};
   font-style: italic;
+  background-color: ${props => props.theme.colors.cardBackground};
+  border-radius: 8px;
+  box-shadow: ${props => props.theme.shadows.small};
 `;
 
 const InfoBadge = styled.span`
@@ -112,10 +115,27 @@ const DetailSummary = styled.div`
   font-weight: bold;
 `;
 
-const LoadingMessage = styled.div`
-  text-align: center;
-  padding: 30px;
-  color: ${props => props.theme.colors.textLight};
+const LoadingWrapper = styled.div`
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 200px;
+  width: 100%;
+`;
+
+const LoadingSpinner = styled.div`
+  border: 4px solid rgba(0, 0, 0, 0.1);
+  border-left-color: ${props => props.theme.colors.primary};
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  animation: spin 1s linear infinite;
+  
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
 `;
 
 const ErrorMessage = styled.div`
@@ -127,9 +147,57 @@ const ErrorMessage = styled.div`
   margin-bottom: 10px;
 `;
 
+const FilterContainer = styled.div`
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+`;
+
+const DateRangeFilter = styled.div`
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+`;
+
+const FilterInput = styled.input`
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+`;
+
+const FilterButton = styled.button`
+  background-color: ${props => props.theme.colors.primary};
+  color: ${props => props.theme.colors.secondary};
+  border: none;
+  padding: 8px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+  
+  &:hover {
+    background-color: ${props => props.theme.colors.primaryHover};
+  }
+`;
+
+const RefreshButton = styled(FilterButton)`
+  background-color: ${props => props.theme.colors.secondary};
+  color: white;
+  
+  &:hover {
+    background-color: #333;
+  }
+`;
+
 const SaleHistory = () => {
   const [selectedSale, setSelectedSale] = useState(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+  const [isRefreshing, setIsRefreshing] = useState(false);
   
   const { 
     sales, 
@@ -138,11 +206,24 @@ const SaleHistory = () => {
     fetchSales
   } = useTransactions();
   
+  // Cargar ventas al montar el componente
   useEffect(() => {
-    // Recargar ventas cuando se monte el componente
     fetchSales();
   }, [fetchSales]);
   
+  // Función para filtrar ventas por rango de fechas
+  const handleFilterByDate = () => {
+    if (!startDate || !endDate) {
+      // Si no hay fechas, mostrar mensaje y no hacer nada
+      alert('Por favor, selecciona fechas de inicio y fin para filtrar');
+      return;
+    }
+    
+    // Llamar a fetchSales con las fechas como parámetros
+    fetchSales(startDate, endDate);
+  };
+  
+  // Función para formatear fechas
   const formatDate = (dateString) => {
     const options = { 
       year: 'numeric', 
@@ -154,13 +235,37 @@ const SaleHistory = () => {
     return new Date(dateString).toLocaleDateString('es-ES', options);
   };
   
+  // Manejar click en una fila para mostrar detalles
   const handleRowClick = (sale) => {
     setSelectedSale(sale);
     setIsDetailModalOpen(true);
   };
   
-  if (salesLoading) {
-    return <LoadingMessage>Cargando historial de ventas...</LoadingMessage>;
+  // Función para refrescar los datos
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    // Si hay fechas seleccionadas, mantenerlas en la recarga
+    if (startDate && endDate) {
+      await fetchSales(startDate, endDate);
+    } else {
+      await fetchSales();
+    }
+    setIsRefreshing(false);
+  };
+
+  // Función para limpiar filtros
+  const handleClearFilters = () => {
+    setStartDate('');
+    setEndDate('');
+    fetchSales(); // Recargar sin filtros
+  };
+  
+  if (salesLoading && !isRefreshing) {
+    return (
+      <LoadingWrapper>
+        <LoadingSpinner />
+      </LoadingWrapper>
+    );
   }
   
   if (salesError) {
@@ -170,6 +275,37 @@ const SaleHistory = () => {
   return (
     <Container>
       <Title>Historial de Ventas</Title>
+      
+      <FilterContainer>
+        <DateRangeFilter>
+          <label htmlFor="startDateSale">Desde:</label>
+          <FilterInput 
+            type="date" 
+            id="startDateSale"
+            value={startDate} 
+            onChange={(e) => setStartDate(e.target.value)}
+          />
+          <label htmlFor="endDateSale">Hasta:</label>
+          <FilterInput 
+            type="date" 
+            id="endDateSale"
+            value={endDate} 
+            onChange={(e) => setEndDate(e.target.value)}
+          />
+          <FilterButton onClick={handleFilterByDate}>Filtrar</FilterButton>
+          {(startDate || endDate) && (
+            <FilterButton 
+              onClick={handleClearFilters}
+              style={{ backgroundColor: '#6c757d' }}
+            >
+              Limpiar filtros
+            </FilterButton>
+          )}
+        </DateRangeFilter>
+        <RefreshButton onClick={handleRefresh} disabled={isRefreshing}>
+          {isRefreshing ? 'Actualizando...' : 'Actualizar'}
+        </RefreshButton>
+      </FilterContainer>
       
       {sales.length === 0 ? (
         <NoRecords>No hay registros de ventas</NoRecords>

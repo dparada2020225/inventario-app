@@ -152,12 +152,15 @@ const FilterContainer = styled.div`
   justify-content: space-between;
   margin-bottom: 20px;
   align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
 `;
 
 const DateRangeFilter = styled.div`
   display: flex;
   gap: 10px;
   align-items: center;
+  flex-wrap: wrap;
 `;
 
 const FilterInput = styled.input`
@@ -208,11 +211,16 @@ const PurchaseHistory = () => {
     fetchPurchases();
   }, [fetchPurchases]);
   
-  // Función para filtrar compras por rango de fechas (esto se implementaría completamente en una versión real)
+  // Función para filtrar compras por rango de fechas
   const handleFilterByDate = () => {
-    // En una implementación real, se enviarían los parámetros de filtro al backend
-    // O se filtrarían localmente si todas las compras ya están cargadas
-    fetchPurchases();
+    if (!startDate || !endDate) {
+      // Si no hay fechas, mostrar mensaje y no hacer nada
+      alert('Por favor, selecciona fechas de inicio y fin para filtrar');
+      return;
+    }
+    
+    // Llamar a fetchPurchases con las fechas como parámetros
+    fetchPurchases(startDate, endDate);
   };
   
   // Función para formatear fechas
@@ -241,8 +249,20 @@ const PurchaseHistory = () => {
   // Función para refrescar los datos
   const handleRefresh = async () => {
     setIsRefreshing(true);
-    await fetchPurchases();
+    // Si hay fechas seleccionadas, mantenerlas en la recarga
+    if (startDate && endDate) {
+      await fetchPurchases(startDate, endDate);
+    } else {
+      await fetchPurchases();
+    }
     setIsRefreshing(false);
+  };
+
+  // Función para limpiar filtros
+  const handleClearFilters = () => {
+    setStartDate('');
+    setEndDate('');
+    fetchPurchases(); // Recargar sin filtros
   };
   
   if (purchasesLoading && !isRefreshing) {
@@ -263,20 +283,29 @@ const PurchaseHistory = () => {
       
       <FilterContainer>
         <DateRangeFilter>
+          <label htmlFor="startDate">Desde:</label>
           <FilterInput 
             type="date" 
+            id="startDate"
             value={startDate} 
             onChange={(e) => setStartDate(e.target.value)}
-            placeholder="Fecha inicio"
           />
-          <span>a</span>
+          <label htmlFor="endDate">Hasta:</label>
           <FilterInput 
             type="date" 
+            id="endDate"
             value={endDate} 
             onChange={(e) => setEndDate(e.target.value)}
-            placeholder="Fecha fin"
           />
           <FilterButton onClick={handleFilterByDate}>Filtrar</FilterButton>
+          {(startDate || endDate) && (
+            <FilterButton 
+              onClick={handleClearFilters}
+              style={{ backgroundColor: '#6c757d' }}
+            >
+              Limpiar filtros
+            </FilterButton>
+          )}
         </DateRangeFilter>
         <RefreshButton onClick={handleRefresh} disabled={isRefreshing}>
           {isRefreshing ? 'Actualizando...' : 'Actualizar'}

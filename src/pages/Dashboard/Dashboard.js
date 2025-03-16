@@ -280,7 +280,6 @@ const DashboardContent = () => {
     loading,
     error,
     deleteProduct,
-    exportToCSV,
     refreshProducts
   } = useProducts();
   
@@ -360,13 +359,6 @@ const DashboardContent = () => {
     }
   };
   
-  const handleExportToCSV = async () => {
-    try {
-      await exportToCSV();
-    } catch (err) {
-      console.error("Error al exportar a CSV:", err);
-    }
-  };
 
   const handleCreateProduct = () => {
     setProductToEdit(null);
@@ -424,9 +416,6 @@ const DashboardContent = () => {
         <ActionsContainer>
           <StyledButton primary onClick={handleCreateProduct}>
             Crear Nuevo Producto
-          </StyledButton>
-          <StyledButton onClick={handleExportToCSV} style={{backgroundColor: '#222'}}>
-            Exportar a CSV
           </StyledButton>
         </ActionsContainer>
       )}

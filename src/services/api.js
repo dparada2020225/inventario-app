@@ -74,32 +74,6 @@ export const productService = {
     }
   },
   
-  // Exportar a CSV
-  exportToCSV: async () => {
-    try {
-      console.log('Exportando productos a CSV...');
-      const response = await axios.get(`${API_URL}/api/products/export-csv`, {
-        responseType: 'blob'
-      });
-      
-      // Crear un enlace para descargar el archivo
-      const url = window.URL.createObjectURL(new Blob([response.data]));
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', 'productos.csv');
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      
-      console.log('CSV exportado correctamente');
-      return true;
-    } catch (error) {
-      console.error('Error exporting to CSV:', error);
-      console.log('Respuesta de error:', error.response?.data);
-      throw error;
-    }
-  },
-  
   // Subir imagen
   uploadImage: async (file) => {
     try {
@@ -125,11 +99,25 @@ export const productService = {
 
 // Servicios para compras
 export const purchaseService = {
-  // Obtener todas las compras
-  getAllPurchases: async () => {
+  // Obtener todas las compras con opción de filtrado por fecha
+  getAllPurchases: async (params = {}) => {
     try {
-      console.log('Obteniendo todas las compras...');
-      const response = await axios.get(`${API_URL}/api/purchases`);
+      console.log('Obteniendo compras con parámetros:', params);
+      
+      // Construir la URL con los parámetros de consulta
+      let url = `${API_URL}/api/purchases`;
+      
+      // Si hay parámetros de fecha, agregar como query string
+      if (params.startDate && params.endDate) {
+        const queryParams = new URLSearchParams({
+          startDate: params.startDate,
+          endDate: params.endDate
+        }).toString();
+        
+        url = `${url}?${queryParams}`;
+      }
+      
+      const response = await axios.get(url);
       console.log('Compras obtenidas:', response.data.length);
       return response.data;
     } catch (error) {
@@ -170,11 +158,25 @@ export const purchaseService = {
 
 // Servicios para ventas
 export const saleService = {
-  // Obtener todas las ventas
-  getAllSales: async () => {
+  // Obtener todas las ventas con opción de filtrado por fecha
+  getAllSales: async (params = {}) => {
     try {
-      console.log('Obteniendo todas las ventas...');
-      const response = await axios.get(`${API_URL}/api/sales`);
+      console.log('Obteniendo ventas con parámetros:', params);
+      
+      // Construir la URL con los parámetros de consulta
+      let url = `${API_URL}/api/sales`;
+      
+      // Si hay parámetros de fecha, agregar como query string
+      if (params.startDate && params.endDate) {
+        const queryParams = new URLSearchParams({
+          startDate: params.startDate,
+          endDate: params.endDate
+        }).toString();
+        
+        url = `${url}?${queryParams}`;
+      }
+      
+      const response = await axios.get(url);
       console.log('Ventas obtenidas:', response.data.length);
       return response.data;
     } catch (error) {

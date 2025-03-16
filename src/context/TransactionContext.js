@@ -18,11 +18,18 @@ export const TransactionProvider = ({ children }) => {
   const [salesError, setSalesError] = useState(null);
   
   // Cargar compras - usando useCallback para evitar recreación de funciones
-  const fetchPurchases = useCallback(async () => {
+  const fetchPurchases = useCallback(async (startDate, endDate) => {
     try {
       setPurchasesLoading(true);
       setPurchasesError(null);
-      const data = await purchaseService.getAllPurchases();
+      
+      // Construir parámetros de consulta para el filtro de fecha
+      let params = {};
+      if (startDate && endDate) {
+        params = { startDate, endDate };
+      }
+      
+      const data = await purchaseService.getAllPurchases(params);
       setPurchases(data);
       return data;
     } catch (error) {
@@ -35,11 +42,18 @@ export const TransactionProvider = ({ children }) => {
   }, []);
   
   // Cargar ventas
-  const fetchSales = useCallback(async () => {
+  const fetchSales = useCallback(async (startDate, endDate) => {
     try {
       setSalesLoading(true);
       setSalesError(null);
-      const data = await saleService.getAllSales();
+      
+      // Construir parámetros de consulta para el filtro de fecha
+      let params = {};
+      if (startDate && endDate) {
+        params = { startDate, endDate };
+      }
+      
+      const data = await saleService.getAllSales(params);
       setSales(data);
       return data;
     } catch (error) {

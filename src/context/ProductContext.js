@@ -119,15 +119,6 @@ export const ProductProvider = ({ children }) => {
     }
   };
 
-  const exportToCSV = async () => {
-    try {
-      await productService.exportToCSV();
-    } catch (err) {
-      setError('Error al exportar a CSV');
-      console.error(err);
-      throw err;
-    }
-  };
 
   // Obtener categorías y colores únicos para los filtros
   const categories = [...new Set(products.map(p => p.category))].filter(Boolean).sort();
@@ -145,7 +136,6 @@ export const ProductProvider = ({ children }) => {
       setFilters,
       updateProduct,
       deleteProduct,
-      exportToCSV,
       refreshProducts: fetchProducts
     }}>
       {children}
