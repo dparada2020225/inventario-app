@@ -91,48 +91,77 @@ const ErrorMessage = styled.div`
   border-radius: 4px;
 `;
 
+const RefreshButton = styled.button`
+  background-color: ${props => props.theme.colors.secondary};
+  color: white;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 6px;
+  margin-left: 15px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.2s;
+  
+  &:hover {
+    background-color: #333;
+    transform: translateY(-2px);
+  }
+  
+  &:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+  }
+`;
+
 const UserManagement = () => {
   const [users, setUsers] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [dataFetched, setDataFetched] = useState(false);
+  const [initialized, setInitialized] = useState(false);
   
   const { getAllUsers, isAdmin } = useAuth();
   
-  // Usando useCallback para evitar recrear la función en cada render
-  const fetchUsers = useCallback(async () => {
-    if (!isAdmin || dataFetched) return;
+  // Función para cargar usuarios una sola vez
+  const fetchUsers = useCallback(async (forceRefresh = false) => {
+    if (!isAdmin) return;
+    
+    // No cargar si ya estamos cargando, excepto si es forzado
+    if (loading && !forceRefresh) return;
     
     try {
       setLoading(true);
-      const data = await getAllUsers();
-      console.log("Datos de usuarios recibidos:", data);
+      
+      // Pasar el parámetro forceRefresh para indicar si debe ignorar la caché
+      const data = await getAllUsers(forceRefresh);
       
       if (Array.isArray(data)) {
+        console.log("Datos de usuarios recibidos:", data);
         setUsers(data);
         setError('');
+        setInitialized(true);
       } else {
         setError('La respuesta del servidor no es válida');
         console.error('Respuesta no válida del servidor:', data);
       }
-      
-      // Marcamos que los datos ya han sido obtenidos
-      setDataFetched(true);
     } catch (err) {
-      console.error('Error detallado al cargar usuarios:', err);
+      console.error('Error al cargar usuarios:', err);
       setError(`Error al cargar usuarios: ${err.message || 'Error desconocido'}`);
     } finally {
       setLoading(false);
     }
-  }, [getAllUsers, isAdmin, dataFetched]);
+  }, [getAllUsers, isAdmin, loading]);
   
+  // Cargar usuarios solo cuando se monta el componente
   useEffect(() => {
-    fetchUsers();
-  }, [fetchUsers]);
+    if (!initialized && isAdmin) {
+      fetchUsers();
+    }
+  }, [fetchUsers, initialized, isAdmin]);
   
-  if (loading) {
-    return <LoadingWrapper>Cargando usuarios...</LoadingWrapper>;
-  }
+  // Función para forzar la actualización de usuarios
+  const handleRefresh = () => {
+    fetchUsers(true); // Pasar true para forzar actualización
+  };
   
   return (
     <Container>
@@ -140,9 +169,16 @@ const UserManagement = () => {
       
       {error && <ErrorMessage>{error}</ErrorMessage>}
       
-      <Button to="/admin/users/new">Crear Nuevo Usuario</Button>
+      <div style={{ display: 'flex', alignItems: 'center' }}>
+        <Button to="/admin/users/new">Crear Nuevo Usuario</Button>
+        <RefreshButton onClick={handleRefresh} disabled={loading}>
+          {loading ? 'Actualizando...' : 'Actualizar lista'}
+        </RefreshButton>
+      </div>
       
-      {!error && (
+      {loading ? (
+        <LoadingWrapper>Cargando usuarios...</LoadingWrapper>
+      ) : (
         <Table>
           <thead>
             <Tr>
