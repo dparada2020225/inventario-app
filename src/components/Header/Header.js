@@ -96,7 +96,7 @@ const DropdownContent = styled.div`
   position: absolute;
   right: 0;
   background-color: #f9f9f9;
-  min-width: 220px;
+  min-width: 160px;
   box-shadow: ${props => props.theme.shadows.medium};
   z-index: 1;
   border-radius: 4px;
@@ -114,12 +114,6 @@ const DropdownItem = styled.a`
   &:hover {
     background-color: #f1f1f1;
   }
-`;
-
-const DropdownDivider = styled.div`
-  height: 1px;
-  background-color: #ddd;
-  margin: 5px 0;
 `;
 
 const Badge = styled.span`
@@ -154,6 +148,7 @@ const Header = () => {
   }, []);
   
   const handleLogout = () => {
+    setDropdownOpen(false); // Cerrar el menú desplegable
     logout();
     navigate('/login');
   };
@@ -186,17 +181,6 @@ const Header = () => {
                   {isAdmin && <Badge>Admin</Badge>}
                 </DropdownButton>
                 <DropdownContent isOpen={dropdownOpen}>
-                  {isAdmin && (
-                    <>
-                      <DropdownItem as={Link} to="/admin/users/new" onClick={() => setDropdownOpen(false)}>
-                        Crear Usuario
-                      </DropdownItem>
-                      <DropdownItem as={Link} to="/admin/transactions" onClick={() => setDropdownOpen(false)}>
-                        Administrar Transacciones
-                      </DropdownItem>
-                      <DropdownDivider />
-                    </>
-                  )}
                   <DropdownItem onClick={handleLogout}>Cerrar Sesión</DropdownItem>
                 </DropdownContent>
               </Dropdown>
