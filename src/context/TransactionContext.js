@@ -1,5 +1,5 @@
 // src/context/TransactionContext.js
-import React, { createContext, useState, useContext, useEffect } from 'react';
+import React, { createContext, useState, useContext, useCallback } from 'react';
 import { purchaseService, saleService } from '../services/api';
 
 const TransactionContext = createContext();
@@ -17,35 +17,39 @@ export const TransactionProvider = ({ children }) => {
   const [salesLoading, setSalesLoading] = useState(false);
   const [salesError, setSalesError] = useState(null);
   
-  // Cargar compras
-  const fetchPurchases = async () => {
+  // Cargar compras - usando useCallback para evitar recreación de funciones
+  const fetchPurchases = useCallback(async () => {
     try {
       setPurchasesLoading(true);
       setPurchasesError(null);
       const data = await purchaseService.getAllPurchases();
       setPurchases(data);
+      return data;
     } catch (error) {
       console.error('Error al cargar compras:', error);
       setPurchasesError('Error al cargar el historial de compras');
+      return [];
     } finally {
       setPurchasesLoading(false);
     }
-  };
+  }, []);
   
   // Cargar ventas
-  const fetchSales = async () => {
+  const fetchSales = useCallback(async () => {
     try {
       setSalesLoading(true);
       setSalesError(null);
       const data = await saleService.getAllSales();
       setSales(data);
+      return data;
     } catch (error) {
       console.error('Error al cargar ventas:', error);
       setSalesError('Error al cargar el historial de ventas');
+      return [];
     } finally {
       setSalesLoading(false);
     }
-  };
+  }, []);
   
   // Crear nueva compra
   const createPurchase = async (purchaseData) => {
@@ -53,7 +57,7 @@ export const TransactionProvider = ({ children }) => {
       setPurchasesLoading(true);
       setPurchasesError(null);
       const result = await purchaseService.createPurchase(purchaseData);
-      setPurchases([...purchases, result]);
+      setPurchases(prev => [result, ...prev]); // Añadir al inicio de la lista
       return result;
     } catch (error) {
       console.error('Error al crear compra:', error);
@@ -70,7 +74,7 @@ export const TransactionProvider = ({ children }) => {
       setSalesLoading(true);
       setSalesError(null);
       const result = await saleService.createSale(saleData);
-      setSales([...sales, result]);
+      setSales(prev => [result, ...prev]); // Añadir al inicio de la lista
       return result;
     } catch (error) {
       console.error('Error al crear venta:', error);
@@ -111,11 +115,15 @@ export const TransactionProvider = ({ children }) => {
     }
   };
   
-  // Cargar datos al montar el componente
-  useEffect(() => {
-    fetchPurchases();
-    fetchSales();
-  }, []);
+  // Recargar todos los datos de transacciones
+  const refreshAll = useCallback(async () => {
+    await Promise.all([fetchPurchases(), fetchSales()]);
+  }, [fetchPurchases, fetchSales]);
+  
+  // Cargar datos iniciales al montar el componente
+  React.useEffect(() => {
+    refreshAll();
+  }, [refreshAll]);
   
   // Valor del contexto
   const value = {
@@ -136,9 +144,7 @@ export const TransactionProvider = ({ children }) => {
     getSale,
     
     // Recargar ambos
-    refreshAll: async () => {
-      await Promise.all([fetchPurchases(), fetchSales()]);
-    }
+    refreshAll
   };
   
   return (

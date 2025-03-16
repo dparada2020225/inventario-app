@@ -1,13 +1,24 @@
 // src/pages/Transactions/TransactionsPage.js
 import React, { useState } from 'react';
 import styled from 'styled-components';
-import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { TransactionProvider } from '../../context/TransactionContext';
+import CreatePurchaseForm from '../../components/Purchase/CreatePurchaseForm';
+import PurchaseHistory from '../../components/Purchase/PurchaseHistory';
+import CreateSaleForm from '../../components/Sale/CreateSaleForm';
+import SaleHistory from '../../components/Sale/SaleHistory';
+import Modal from '../../components/Modal/Modal';
 
 const Container = styled.div`
   max-width: 1200px;
   margin: 40px auto;
   padding: 0 20px;
+`;
+
+const PageTitle = styled.h1`
+  color: ${props => props.theme.colors.text};
+  margin-bottom: 30px;
+  text-align: center;
 `;
 
 const TabsContainer = styled.div`
@@ -81,22 +92,12 @@ const ErrorMessage = styled.div`
   border-radius: 4px;
 `;
 
-const InfoMessage = styled.div`
-  color: ${props => props.theme.colors.textLight};
-  background-color: rgba(150, 255, 0, 0.1);
-  border-left: 3px solid ${props => props.theme.colors.primary};
-  padding: 15px;
-  margin: 20px 0;
-  border-radius: 4px;
-  text-align: center;
-`;
-
 const TransactionsPage = () => {
   const [activeTab, setActiveTab] = useState('purchases'); // 'purchases' o 'sales'
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const { isAdmin } = useAuth();
-  const navigate = useNavigate();
   
-  // Si no es admin, redirigir al dashboard
+  // Si no es admin, mostrar mensaje de error
   if (!isAdmin) {
     return (
       <Container>
@@ -107,39 +108,71 @@ const TransactionsPage = () => {
     );
   }
   
+  const handleCreateTransaction = () => {
+    setIsCreateModalOpen(true);
+  };
+  
+  const handleModalClose = () => {
+    setIsCreateModalOpen(false);
+  };
+  
+  const handleTransactionSuccess = () => {
+    setIsCreateModalOpen(false);
+    // Recargar los datos de transacciones
+  };
+  
   return (
-    <Container>
-      <TabsContainer>
-        <Tab 
-          active={activeTab === 'purchases'}
-          onClick={() => setActiveTab('purchases')}
+    <TransactionProvider>
+      <Container>
+        <PageTitle>Gestión de Transacciones</PageTitle>
+        
+        <TabsContainer>
+          <Tab 
+            active={activeTab === 'purchases'}
+            onClick={() => setActiveTab('purchases')}
+          >
+            Compras
+          </Tab>
+          <Tab 
+            active={activeTab === 'sales'}
+            onClick={() => setActiveTab('sales')}
+          >
+            Ventas
+          </Tab>
+        </TabsContainer>
+        
+        <ActionButton onClick={handleCreateTransaction}>
+          + Registrar {activeTab === 'purchases' ? 'Compra' : 'Venta'}
+        </ActionButton>
+        
+        <TabContent active={activeTab === 'purchases'}>
+          <PurchaseHistory />
+        </TabContent>
+        
+        <TabContent active={activeTab === 'sales'}>
+          <SaleHistory />
+        </TabContent>
+        
+        {/* Modal para crear una nueva transacción */}
+        <Modal
+          isOpen={isCreateModalOpen}
+          title={`Registrar ${activeTab === 'purchases' ? 'Compra' : 'Venta'}`}
+          onClose={handleModalClose}
         >
-          Compras
-        </Tab>
-        <Tab 
-          active={activeTab === 'sales'}
-          onClick={() => setActiveTab('sales')}
-        >
-          Ventas
-        </Tab>
-      </TabsContainer>
-      
-      <ActionButton onClick={() => {}}>
-        + Registrar {activeTab === 'purchases' ? 'Compra' : 'Venta'}
-      </ActionButton>
-      
-      <TabContent active={activeTab === 'purchases'}>
-        <InfoMessage>
-          Módulo de Compras en mantenimiento. Estará disponible próximamente.
-        </InfoMessage>
-      </TabContent>
-      
-      <TabContent active={activeTab === 'sales'}>
-        <InfoMessage>
-          Módulo de Ventas en mantenimiento. Estará disponible próximamente.
-        </InfoMessage>
-      </TabContent>
-    </Container>
+          {activeTab === 'purchases' ? (
+            <CreatePurchaseForm 
+              onSuccess={handleTransactionSuccess} 
+              onCancel={handleModalClose} 
+            />
+          ) : (
+            <CreateSaleForm 
+              onSuccess={handleTransactionSuccess} 
+              onCancel={handleModalClose} 
+            />
+          )}
+        </Modal>
+      </Container>
+    </TransactionProvider>
   );
 };
 

@@ -11,6 +11,8 @@ import Header from './components/Header/Header';
 import ProtectedRoute from './components/ProtectedRoute/ProtectedRoute';
 import { theme } from './theme';
 import { AuthProvider } from './context/AuthContext';
+import { TransactionProvider } from './context/TransactionContext';
+import { ProductProvider } from './context/ProductContext';
 
 const GlobalStyle = createGlobalStyle`
   body {
@@ -34,27 +36,31 @@ function App() {
     <ThemeProvider theme={theme}>
       <Router>
         <AuthProvider>
-          <GlobalStyle />
-          <Header />
-          <Routes>
-            {/* Rutas públicas */}
-            <Route path="/login" element={<Login />} />
-            
-            {/* Rutas protegidas (requieren autenticación) */}
-            <Route element={<ProtectedRoute />}>
-              <Route path="/" element={<Dashboard />} />
-            </Route>
-            
-            {/* Rutas solo para admin */}
-            <Route element={<ProtectedRoute requireAdmin={true} />}>
-              <Route path="/admin/users" element={<UserManagement />} />
-              <Route path="/admin/users/new" element={<Register />} />
-              <Route path="/admin/transactions" element={<TransactionsPage />} />
-            </Route>
-            
-            {/* Ruta 404 */}
-            <Route path="*" element={<div style={{padding: '40px', textAlign: 'center'}}>Página no encontrada</div>} />
-          </Routes>
+          <ProductProvider>
+            <TransactionProvider>
+              <GlobalStyle />
+              <Header />
+              <Routes>
+                {/* Rutas públicas */}
+                <Route path="/login" element={<Login />} />
+                
+                {/* Rutas protegidas (requieren autenticación) */}
+                <Route element={<ProtectedRoute />}>
+                  <Route path="/" element={<Dashboard />} />
+                </Route>
+                
+                {/* Rutas solo para admin */}
+                <Route element={<ProtectedRoute requireAdmin={true} />}>
+                  <Route path="/admin/users" element={<UserManagement />} />
+                  <Route path="/admin/users/new" element={<Register />} />
+                  <Route path="/admin/transactions" element={<TransactionsPage />} />
+                </Route>
+                
+                {/* Ruta 404 */}
+                <Route path="*" element={<div style={{padding: '40px', textAlign: 'center'}}>Página no encontrada</div>} />
+              </Routes>
+            </TransactionProvider>
+          </ProductProvider>
         </AuthProvider>
       </Router>
     </ThemeProvider>

@@ -54,6 +54,9 @@ const NoRecords = styled.div`
   padding: 30px;
   color: ${props => props.theme.colors.textLight};
   font-style: italic;
+  background-color: ${props => props.theme.colors.cardBackground};
+  border-radius: 8px;
+  box-shadow: ${props => props.theme.shadows.small};
 `;
 
 const InfoBadge = styled.span`
@@ -112,10 +115,27 @@ const DetailSummary = styled.div`
   font-weight: bold;
 `;
 
-const LoadingMessage = styled.div`
-  text-align: center;
-  padding: 30px;
-  color: ${props => props.theme.colors.textLight};
+const LoadingWrapper = styled.div`
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 200px;
+  width: 100%;
+`;
+
+const LoadingSpinner = styled.div`
+  border: 4px solid rgba(0, 0, 0, 0.1);
+  border-left-color: ${props => props.theme.colors.primary};
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  animation: spin 1s linear infinite;
+  
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
 `;
 
 const ErrorMessage = styled.div`
@@ -127,9 +147,54 @@ const ErrorMessage = styled.div`
   margin-bottom: 10px;
 `;
 
+const FilterContainer = styled.div`
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  align-items: center;
+`;
+
+const DateRangeFilter = styled.div`
+  display: flex;
+  gap: 10px;
+  align-items: center;
+`;
+
+const FilterInput = styled.input`
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+`;
+
+const FilterButton = styled.button`
+  background-color: ${props => props.theme.colors.primary};
+  color: ${props => props.theme.colors.secondary};
+  border: none;
+  padding: 8px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+  
+  &:hover {
+    background-color: ${props => props.theme.colors.primaryHover};
+  }
+`;
+
+const RefreshButton = styled(FilterButton)`
+  background-color: ${props => props.theme.colors.secondary};
+  color: white;
+  
+  &:hover {
+    background-color: #333;
+  }
+`;
+
 const PurchaseHistory = () => {
   const [selectedPurchase, setSelectedPurchase] = useState(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+  const [isRefreshing, setIsRefreshing] = useState(false);
   
   const { 
     purchases, 
@@ -138,11 +203,19 @@ const PurchaseHistory = () => {
     fetchPurchases
   } = useTransactions();
   
+  // Cargar compras al montar el componente
   useEffect(() => {
-    // Recargar compras cuando se monte el componente
     fetchPurchases();
   }, [fetchPurchases]);
   
+  // Función para filtrar compras por rango de fechas (esto se implementaría completamente en una versión real)
+  const handleFilterByDate = () => {
+    // En una implementación real, se enviarían los parámetros de filtro al backend
+    // O se filtrarían localmente si todas las compras ya están cargadas
+    fetchPurchases();
+  };
+  
+  // Función para formatear fechas
   const formatDate = (dateString) => {
     const options = { 
       year: 'numeric', 
@@ -154,13 +227,30 @@ const PurchaseHistory = () => {
     return new Date(dateString).toLocaleDateString('es-ES', options);
   };
   
+  // Función para formatear moneda
+  const formatCurrency = (amount) => {
+    return `Q ${parseFloat(amount).toFixed(2)}`;
+  };
+  
+  // Manejar click en una fila para mostrar detalles
   const handleRowClick = (purchase) => {
     setSelectedPurchase(purchase);
     setIsDetailModalOpen(true);
   };
   
-  if (purchasesLoading) {
-    return <LoadingMessage>Cargando historial de compras...</LoadingMessage>;
+  // Función para refrescar los datos
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    await fetchPurchases();
+    setIsRefreshing(false);
+  };
+  
+  if (purchasesLoading && !isRefreshing) {
+    return (
+      <LoadingWrapper>
+        <LoadingSpinner />
+      </LoadingWrapper>
+    );
   }
   
   if (purchasesError) {
@@ -170,6 +260,28 @@ const PurchaseHistory = () => {
   return (
     <Container>
       <Title>Historial de Compras</Title>
+      
+      <FilterContainer>
+        <DateRangeFilter>
+          <FilterInput 
+            type="date" 
+            value={startDate} 
+            onChange={(e) => setStartDate(e.target.value)}
+            placeholder="Fecha inicio"
+          />
+          <span>a</span>
+          <FilterInput 
+            type="date" 
+            value={endDate} 
+            onChange={(e) => setEndDate(e.target.value)}
+            placeholder="Fecha fin"
+          />
+          <FilterButton onClick={handleFilterByDate}>Filtrar</FilterButton>
+        </DateRangeFilter>
+        <RefreshButton onClick={handleRefresh} disabled={isRefreshing}>
+          {isRefreshing ? 'Actualizando...' : 'Actualizar'}
+        </RefreshButton>
+      </FilterContainer>
       
       {purchases.length === 0 ? (
         <NoRecords>No hay registros de compras</NoRecords>
@@ -192,7 +304,7 @@ const PurchaseHistory = () => {
                 <Td>
                   <InfoBadge>{purchase.items.length} productos</InfoBadge>
                 </Td>
-                <Td>Q {purchase.totalAmount.toFixed(2)}</Td>
+                <Td>{formatCurrency(purchase.totalAmount)}</Td>
                 <Td>{purchase.user?.username || 'Sistema'}</Td>
               </Tr>
             ))}
@@ -231,15 +343,15 @@ const PurchaseHistory = () => {
                   <DetailTr key={index}>
                     <DetailTd>{item.product?.name || 'Producto'}</DetailTd>
                     <DetailTd>{item.quantity}</DetailTd>
-                    <DetailTd>Q {item.price.toFixed(2)}</DetailTd>
-                    <DetailTd>Q {item.total.toFixed(2)}</DetailTd>
+                    <DetailTd>{formatCurrency(item.price)}</DetailTd>
+                    <DetailTd>{formatCurrency(item.total)}</DetailTd>
                   </DetailTr>
                 ))}
               </tbody>
             </DetailTable>
             
             <DetailSummary>
-              Total: Q {selectedPurchase.totalAmount.toFixed(2)}
+              Total: {formatCurrency(selectedPurchase.totalAmount)}
             </DetailSummary>
           </DetailContainer>
         )}

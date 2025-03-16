@@ -142,6 +142,14 @@ const TotalAmount = styled.div`
   }
 `;
 
+const SearchBox = styled.div`
+  margin-bottom: 10px;
+`;
+
+const SearchInput = styled(Input)`
+  width: 100%;
+`;
+
 const ErrorMessage = styled.div`
   color: ${props => props.theme.colors.danger};
   background-color: rgba(255, 0, 0, 0.1);
@@ -149,6 +157,22 @@ const ErrorMessage = styled.div`
   padding: 12px;
   border-radius: 4px;
   margin-bottom: 10px;
+`;
+
+const LoadingSpinner = styled.div`
+  border: 3px solid rgba(0, 0, 0, 0.1);
+  border-left-color: ${props => props.theme.colors.primary};
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  animation: spin 1s linear infinite;
+  margin: 0 auto;
+  
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
 `;
 
 const ButtonGroup = styled.div`
@@ -159,6 +183,8 @@ const ButtonGroup = styled.div`
 
 const CreatePurchaseForm = ({ onSuccess, onCancel }) => {
   const [products, setProducts] = useState([]);
+  const [filteredProducts, setFilteredProducts] = useState([]);
+  const [searchTerm, setSearchTerm] = useState('');
   const [selectedProduct, setSelectedProduct] = useState('');
   const [quantity, setQuantity] = useState(1);
   const [price, setPrice] = useState('');
@@ -166,25 +192,56 @@ const CreatePurchaseForm = ({ onSuccess, onCancel }) => {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [productsLoading, setProductsLoading] = useState(false);
   
   const { createPurchase } = useTransactions();
   
-  // Cargar productos
+  // Cargar productos al iniciar
   useEffect(() => {
     const fetchProducts = async () => {
       try {
+        setProductsLoading(true);
         const data = await productService.getAllProducts();
         setProducts(data);
+        setFilteredProducts(data);
+        setProductsLoading(false);
       } catch (err) {
         setError('Error al cargar los productos');
         console.error(err);
+        setProductsLoading(false);
       }
     };
     
     fetchProducts();
   }, []);
   
-  // Calcular total
+  // Filtrar productos cuando cambia el término de búsqueda
+  useEffect(() => {
+    if (searchTerm.trim() === '') {
+      setFilteredProducts(products);
+    } else {
+      const filtered = products.filter(product => 
+        product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        product.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        product.color.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+      setFilteredProducts(filtered);
+    }
+  }, [searchTerm, products]);
+  
+  // Actualizar precio sugerido cuando cambia el producto seleccionado
+  useEffect(() => {
+    if (selectedProduct) {
+      const product = products.find(p => p._id === selectedProduct);
+      if (product && product.lastPurchasePrice) {
+        setPrice(product.lastPurchasePrice.toString());
+      } else {
+        setPrice('');
+      }
+    }
+  }, [selectedProduct, products]);
+  
+  // Calcular el total de la compra
   const totalAmount = items.reduce(
     (sum, item) => sum + (item.quantity * item.price), 
     0
@@ -281,20 +338,35 @@ const CreatePurchaseForm = ({ onSuccess, onCancel }) => {
       <div>
         <h3>Agregar Productos</h3>
         
+        <SearchBox>
+          <Label htmlFor="searchTerm">Buscar productos</Label>
+          <SearchInput
+            type="text"
+            id="searchTerm"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            placeholder="Buscar por nombre, categoría o color"
+          />
+        </SearchBox>
+        
         <FormGroup>
           <Label htmlFor="product">Producto</Label>
-          <Select
-            id="product"
-            value={selectedProduct}
-            onChange={(e) => setSelectedProduct(e.target.value)}
-          >
-            <option value="">Seleccionar producto</option>
-            {products.map(product => (
-              <option key={product._id} value={product._id}>
-                {product.name} - {product.category} ({product.color})
-              </option>
-            ))}
-          </Select>
+          {productsLoading ? (
+            <LoadingSpinner />
+          ) : (
+            <Select
+              id="product"
+              value={selectedProduct}
+              onChange={(e) => setSelectedProduct(e.target.value)}
+            >
+              <option value="">Seleccionar producto</option>
+              {filteredProducts.map(product => (
+                <option key={product._id} value={product._id}>
+                  {product.name} - {product.category} ({product.color})
+                </option>
+              ))}
+            </Select>
+          )}
         </FormGroup>
         
         <FormGroup>
@@ -326,6 +398,7 @@ const CreatePurchaseForm = ({ onSuccess, onCancel }) => {
         <AddButton 
           type="button" 
           onClick={handleAddItem}
+          disabled={!selectedProduct || quantity <= 0 || price <= 0}
         >
           Agregar a la compra
         </AddButton>
