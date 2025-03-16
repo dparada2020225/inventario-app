@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled, { keyframes } from 'styled-components';
 import { useAuth } from '../../context/AuthContext';
+import axios from 'axios';
 
 const fadeIn = keyframes`
   from {
@@ -112,10 +113,29 @@ const Login = () => {
   const navigate = useNavigate();
   
   useEffect(() => {
-    if (isAuthenticated) {
-      navigate('/');
+console.log("URL de la API:", process.env.REACT_APP_API_URL);
+
+const testAPIConnection = async () => {
+  try {
+    const testUrl = `${process.env.REACT_APP_API_URL || 'https://inventario-server-production-fc8d.up.railway.app'}/api/test`;
+    console.log("Intentando conectar a:", testUrl);
+    const response = await axios.get(testUrl);
+    console.log("Respuesta del servidor:", response.data);
+  } catch (error) {
+    console.error("Error conectando con la API:", error);
+    if (error.response) {
+      console.error("Datos de error:", error.response.data);
+      console.error("Estado:", error.response.status);
+    } else if (error.request) {
+      console.error("No se recibió respuesta del servidor");
+    } else {
+      console.error("Error de configuración:", error.message);
     }
-  }, [isAuthenticated, navigate]);
+  }
+};
+
+testAPIConnection();
+}, []);
   
   const handleChange = (e) => {
     setFormData({
