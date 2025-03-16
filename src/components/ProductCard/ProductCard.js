@@ -144,7 +144,7 @@ const ColorDot = styled.span`
   vertical-align: middle;
 `;
 
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+const API_URL = process.env.REACT_APP_API_URL || 'https://inventario-servidor.vercel.app';
 
 const ProductCard = ({ product, onEdit, onDelete, onAddToSale, isAdmin }) => {
   const [imageError, setImageError] = useState(false);

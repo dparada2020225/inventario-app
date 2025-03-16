@@ -218,7 +218,7 @@ const DetailedErrorContent = styled.pre`
   word-break: break-word;
 `;
 
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+const API_URL = process.env.REACT_APP_API_URL || 'https://inventario-servidor.vercel.app';
 
 const ProductForm = ({ product, onSave, onCancel, availableColors = [] }) => {
   const [formData, setFormData] = useState({

@@ -1,11 +1,16 @@
 // src/services/api.js
 import axios from 'axios';
 
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+const API_URL = process.env.REACT_APP_API_URL || 'https://inventario-servidor.vercel.app';
+console.log('API URL configurada:', API_URL);
+
 
 // Interceptor para añadir el token a todas las solicitudes
 axios.interceptors.request.use(
   config => {
+    // Registrar la URL a la que se está haciendo la petición (para depuración)
+    console.log(`Realizando petición a: ${config.url}`);
+    
     const token = localStorage.getItem('token');
     if (token) {
       config.headers['Authorization'] = `Bearer ${token}`;
@@ -13,6 +18,49 @@ axios.interceptors.request.use(
     return config;
   },
   error => {
+    console.error('Error en la configuración de la solicitud:', error);
+    return Promise.reject(error);
+  }
+);
+
+axios.interceptors.response.use(
+  response => response,
+  error => {
+    // Registrar errores para depuración
+    console.error('Error en solicitud API:', error);
+    
+    if (error.response) {
+      // La solicitud fue hecha y el servidor respondió con un código de estado
+      // que no está en el rango 2xx
+      console.error('Datos de respuesta de error:', error.response.data);
+      console.error('Código de estado:', error.response.status);
+      console.error('Headers de respuesta:', error.response.headers);
+      
+      // Manejar token expirado o inválido (401)
+      if (error.response.status === 401) {
+        console.warn('Error de autenticación detectado, limpiando sesión...');
+        localStorage.removeItem('token');
+        delete axios.defaults.headers.common['Authorization'];
+        
+        // Si estamos en un entorno con window, podemos intentar redireccionar
+        if (typeof window !== 'undefined') {
+          console.log('Redirigiendo a login...');
+          window.location.href = '/login';
+        }
+      }
+    } else if (error.request) {
+      // La solicitud fue hecha pero no se recibió respuesta
+      console.error('No se recibió respuesta:', error.request);
+      
+      // Intentar detectar si es un problema de CORS
+      if (error.message && error.message.includes('Network Error')) {
+        console.error('Posible error de CORS o problema de red');
+      }
+    } else {
+      // Algo sucedió al configurar la solicitud que desencadenó un error
+      console.error('Error al configurar la solicitud:', error.message);
+    }
+    
     return Promise.reject(error);
   }
 );

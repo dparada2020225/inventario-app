@@ -1,6 +1,6 @@
 // Crear un nuevo archivo src/config/api.js
 
-const API_URL = "http://localhost:5000";
+const API_URL = "https://inventario-servidor.vercel.app";
 
 export default API_URL;
 
@@ -31,16 +31,35 @@ axios.interceptors.response.use(
     console.error('Error en solicitud API:', error);
     
     if (error.response) {
-      console.error('Respuesta de error:', error.response.data);
+      // La solicitud fue hecha y el servidor respondió con un código de estado
+      // que no está en el rango 2xx
+      console.error('Datos de respuesta de error:', error.response.data);
       console.error('Código de estado:', error.response.status);
+      console.error('Headers de respuesta:', error.response.headers);
       
       // Manejar token expirado o inválido (401)
       if (error.response.status === 401) {
+        console.warn('Error de autenticación detectado, limpiando sesión...');
         localStorage.removeItem('token');
         delete axios.defaults.headers.common['Authorization'];
-        // Opcional: redirigir a login si es un error de autenticación
-        // window.location.href = '/login';
+        
+        // Si estamos en un entorno con window, podemos intentar redireccionar
+        if (typeof window !== 'undefined') {
+          console.log('Redirigiendo a login...');
+          window.location.href = '/login';
+        }
       }
+    } else if (error.request) {
+      // La solicitud fue hecha pero no se recibió respuesta
+      console.error('No se recibió respuesta:', error.request);
+      
+      // Intentar detectar si es un problema de CORS
+      if (error.message && error.message.includes('Network Error')) {
+        console.error('Posible error de CORS o problema de red');
+      }
+    } else {
+      // Algo sucedió al configurar la solicitud que desencadenó un error
+      console.error('Error al configurar la solicitud:', error.message);
     }
     
     return Promise.reject(error);
