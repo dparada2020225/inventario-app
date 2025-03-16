@@ -1,4 +1,5 @@
-// src/context/AuthContext.js
+// Actualiza src/context/AuthContext.js
+
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
@@ -14,7 +15,7 @@ export const AuthProvider = ({ children }) => {
   const [error, setError] = useState(null);
   const navigate = useNavigate();
   
-  const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+  const API_URL = process.env.REACT_APP_API_URL || 'https://inventario-server.vercel.app';
 
   // Configurar el token en los headers por defecto
   useEffect(() => {
@@ -37,11 +38,23 @@ export const AuthProvider = ({ children }) => {
       }
 
       try {
+        console.log("Verificando token...");
         const res = await axios.get(`${API_URL}/api/auth/me`);
+        console.log("Respuesta de verificación de token:", res.data);
         setUser(res.data);
         setError(null);
       } catch (err) {
-        console.error('Error verifying token:', err);
+        console.error('Error verificando token:', err);
+        // Mostrar detalles específicos del error para depuración
+        if (err.response) {
+          console.error('Respuesta del servidor:', err.response.data);
+          console.error('Código de estado:', err.response.status);
+        } else if (err.request) {
+          console.error('No se recibió respuesta del servidor:', err.request);
+        } else {
+          console.error('Error en la configuración de la solicitud:', err.message);
+        }
+        
         setToken(null);
         setUser(null);
         setError('Sesión expirada. Por favor inicia sesión nuevamente.');
@@ -57,13 +70,21 @@ export const AuthProvider = ({ children }) => {
   const login = async (username, password) => {
     try {
       setLoading(true);
+      console.log("Iniciando sesión con:", { username });
       const res = await axios.post(`${API_URL}/api/auth/login`, { username, password });
+      console.log("Respuesta de login:", res.data);
       setToken(res.data.token);
       setUser(res.data.user);
       setError(null);
       return true;
     } catch (err) {
-      setError(err.response?.data?.message || 'Error al iniciar sesión');
+      console.error('Error en login:', err);
+      if (err.response) {
+        console.error('Respuesta del servidor:', err.response.data);
+        setError(err.response.data.message || 'Error al iniciar sesión');
+      } else {
+        setError('Error de conexión al servidor');
+      }
       return false;
     } finally {
       setLoading(false);
@@ -74,11 +95,19 @@ export const AuthProvider = ({ children }) => {
   const register = async (userData) => {
     try {
       setLoading(true);
+      console.log("Registrando usuario:", userData.username);
       const res = await axios.post(`${API_URL}/api/auth/register`, userData);
+      console.log("Respuesta de registro:", res.data);
       setError(null);
       return res.data;
     } catch (err) {
-      setError(err.response?.data?.message || 'Error al registrar usuario');
+      console.error('Error en registro:', err);
+      if (err.response) {
+        console.error('Respuesta del servidor:', err.response.data);
+        setError(err.response.data.message || 'Error al registrar usuario');
+      } else {
+        setError('Error de conexión al servidor');
+      }
       throw err;
     } finally {
       setLoading(false);
@@ -96,10 +125,34 @@ export const AuthProvider = ({ children }) => {
   const getAllUsers = async () => {
     try {
       setLoading(true);
-      const res = await axios.get(`${API_URL}/api/auth/users`);
+      console.log("Solicitando lista de usuarios...");
+      console.log("URL API:", `${API_URL}/api/auth/users`);
+      console.log("Token presente:", !!token);
+      
+      const res = await axios.get(`${API_URL}/api/auth/users`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      console.log("Respuesta de la API de usuarios:", res.data);
       return res.data;
     } catch (err) {
-      setError(err.response?.data?.message || 'Error al obtener usuarios');
+      console.error('Error al obtener usuarios:', err);
+      
+      // Información detallada del error para depuración
+      if (err.response) {
+        console.error('Respuesta del servidor:', err.response.data);
+        console.error('Código de estado:', err.response.status);
+        setError(err.response.data.message || 'Error al obtener usuarios');
+      } else if (err.request) {
+        console.error('No se recibió respuesta:', err.request);
+        setError('Error de red: No se pudo conectar con el servidor');
+      } else {
+        console.error('Error en la configuración:', err.message);
+        setError(`Error: ${err.message}`);
+      }
+      
       throw err;
     } finally {
       setLoading(false);

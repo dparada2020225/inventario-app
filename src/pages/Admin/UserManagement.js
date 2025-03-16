@@ -1,4 +1,5 @@
-// src/pages/Admin/UserManagement.js
+// Actualiza src/pages/Admin/UserManagement.js
+
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import styled from 'styled-components';
@@ -101,12 +102,19 @@ const UserManagement = () => {
   useEffect(() => {
     const fetchUsers = async () => {
       try {
+        setLoading(true);
         const data = await getAllUsers();
-        setUsers(data);
-        setError('');
+        console.log("Datos de usuarios recibidos:", data);
+        if (Array.isArray(data)) {
+          setUsers(data);
+          setError('');
+        } else {
+          setError('La respuesta del servidor no es válida');
+          console.error('Respuesta no válida del servidor:', data);
+        }
       } catch (err) {
-        setError('Error al cargar usuarios');
-        console.error(err);
+        console.error('Error detallado al cargar usuarios:', err);
+        setError(`Error al cargar usuarios: ${err.message || 'Error desconocido'}`);
       } finally {
         setLoading(false);
       }
@@ -124,40 +132,46 @@ const UserManagement = () => {
     return <LoadingWrapper>Cargando usuarios...</LoadingWrapper>;
   }
   
-  if (error) {
-    return <Container><ErrorMessage>{error}</ErrorMessage></Container>;
-  }
-  
   return (
     <Container>
       <Title>Administración de Usuarios</Title>
       
+      {error && <ErrorMessage>{error}</ErrorMessage>}
+      
       <Button to="/admin/users/new">Crear Nuevo Usuario</Button>
       
-      <Table>
-        <thead>
-          <Tr>
-            <Th>ID</Th>
-            <Th>Usuario</Th>
-            <Th>Rol</Th>
-            <Th>Fecha de Creación</Th>
-          </Tr>
-        </thead>
-        <tbody>
-          {users.map(user => (
-            <Tr key={user._id}>
-              <Td>{user._id}</Td>
-              <Td>{user.username}</Td>
-              <Td>
-                <Badge role={user.role}>
-                  {user.role === 'admin' ? 'Administrador' : 'Usuario'}
-                </Badge>
-              </Td>
-              <Td>{new Date(user.createdAt).toLocaleString()}</Td>
+      {!error && (
+        <Table>
+          <thead>
+            <Tr>
+              <Th>ID</Th>
+              <Th>Usuario</Th>
+              <Th>Rol</Th>
+              <Th>Fecha de Creación</Th>
             </Tr>
-          ))}
-        </tbody>
-      </Table>
+          </thead>
+          <tbody>
+            {users && users.length > 0 ? (
+              users.map(user => (
+                <Tr key={user._id}>
+                  <Td>{user._id}</Td>
+                  <Td>{user.username}</Td>
+                  <Td>
+                    <Badge role={user.role}>
+                      {user.role === 'admin' ? 'Administrador' : 'Usuario'}
+                    </Badge>
+                  </Td>
+                  <Td>{new Date(user.createdAt).toLocaleString()}</Td>
+                </Tr>
+              ))
+            ) : (
+              <Tr>
+                <Td colSpan="4" style={{ textAlign: 'center' }}>No hay usuarios para mostrar</Td>
+              </Tr>
+            )}
+          </tbody>
+        </Table>
+      )}
     </Container>
   );
 };
