@@ -1,6 +1,7 @@
 // src/components/SearchFilters/SearchFilters.js
 import React from 'react';
 import styled from 'styled-components';
+import ColorSelector from '../ColorSelector/ColorSelector';
 
 const Container = styled.div`
   background-color: ${props => props.theme.colors.cardBackground};
@@ -89,6 +90,21 @@ const SecondaryButton = styled.button`
   }
 `;
 
+const Checkbox = styled.div`
+  display: flex;
+  align-items: center;
+  margin-top: 10px;
+  
+  input {
+    margin-right: 8px;
+  }
+  
+  label {
+    color: ${props => props.theme.colors.text};
+    font-weight: 500;
+  }
+`;
+
 const SearchFilters = ({ filters, setFilters, categories, colors }) => {
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -104,7 +120,9 @@ const SearchFilters = ({ filters, setFilters, categories, colors }) => {
       category: '',
       color: '',
       minPrice: '',
-      maxPrice: ''
+      maxPrice: '',
+      inStock: false,
+      withoutStock: false
     });
   };
 
@@ -140,17 +158,12 @@ const SearchFilters = ({ filters, setFilters, categories, colors }) => {
         
         <FilterItem>
           <Label htmlFor="color">Color:</Label>
-          <Select
-            id="color"
-            name="color"
+          <ColorSelector
             value={filters.color || ''}
-            onChange={handleInputChange}
-          >
-            <option value="">Todos los colores</option>
-            {colors && colors.map(color => (
-              <option key={color} value={color}>{color}</option>
-            ))}
-          </Select>
+            onChange={(value) => handleInputChange({ target: { name: 'color', value } })}
+            availableColors={colors} // Usa los colores que ya vienen como prop
+            placeholder="Todos los colores"
+          />
         </FilterItem>
       </FilterSection>
       
@@ -178,9 +191,47 @@ const SearchFilters = ({ filters, setFilters, categories, colors }) => {
             placeholder="Máximo"
           />
         </FilterItem>
+        
+        <FilterItem>
+          <Label>Filtros adicionales:</Label>
+          <Checkbox>
+            <input
+              type="checkbox"
+              id="inStock"
+              name="inStock"
+              checked={filters.inStock || false}
+              onChange={(e) => handleInputChange({ 
+                target: { 
+                  name: 'inStock', 
+                  value: e.target.checked,
+                  type: 'checkbox',
+                  checked: e.target.checked
+                } 
+              })}
+            />
+            <label htmlFor="inStock">Solo productos con stock</label>
+          </Checkbox>
+          <Checkbox>
+            <input
+              type="checkbox"
+              id="withoutStock"
+              name="withoutStock"
+              checked={filters.withoutStock || false}
+              onChange={(e) => handleInputChange({ 
+                target: { 
+                  name: 'withoutStock', 
+                  value: e.target.checked,
+                  type: 'checkbox',
+                  checked: e.target.checked
+                } 
+              })}
+            />
+            <label htmlFor="withoutStock">Solo productos sin stock</label>
+          </Checkbox>
+        </FilterItem>
       </FilterSection>
       
-      <Button primary="true" onClick={() => {}}>Buscar</Button>
+      <Button primary onClick={() => {}}>Buscar</Button>
       <Button onClick={resetFilters}>Reiniciar filtros</Button>
     </Container>
   );

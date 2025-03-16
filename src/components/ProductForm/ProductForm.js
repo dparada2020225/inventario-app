@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import styled, { keyframes } from 'styled-components';
 import axios from 'axios';
+import ColorSelector from '../ColorSelector/ColorSelector';
 
 const fadeIn = keyframes`
   from {
@@ -219,7 +220,7 @@ const DetailedErrorContent = styled.pre`
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
-const ProductForm = ({ product, onSave, onCancel }) => {
+const ProductForm = ({ product, onSave, onCancel, availableColors = [] }) => {
   const [formData, setFormData] = useState({
     _id: '',
     name: '',
@@ -402,13 +403,11 @@ const handleSubmit = async (e) => {
       
       <FormGroup>
         <Label htmlFor="color">Color:</Label>
-        <Input
-          type="text"
-          id="color"
-          name="color"
+        <ColorSelector
           value={formData.color}
-          onChange={handleChange}
-          required
+          onChange={(value) => setFormData({...formData, color: value})}
+          availableColors={availableColors}
+          placeholder="Selecciona o escribe un color"
         />
       </FormGroup>
       

@@ -576,6 +576,7 @@ const DashboardContent = () => {
               product={productToEdit}
               onSave={handleSaveProduct}
               onCancel={() => setIsCreateModalOpen(false)}
+              availableColors={colors} // Pasamos los colores disponibles
             />
           </Modal>
         </>
