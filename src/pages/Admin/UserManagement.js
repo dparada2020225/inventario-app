@@ -1,6 +1,5 @@
-// Actualiza src/pages/Admin/UserManagement.js
-
-import React, { useState, useEffect } from 'react';
+// src/pages/Admin/UserManagement.js
+import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import styled from 'styled-components';
 import { useAuth } from '../../context/AuthContext';
@@ -96,37 +95,40 @@ const UserManagement = () => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [dataFetched, setDataFetched] = useState(false);
   
   const { getAllUsers, isAdmin } = useAuth();
   
-  useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        setLoading(true);
-        const data = await getAllUsers();
-        console.log("Datos de usuarios recibidos:", data);
-        if (Array.isArray(data)) {
-          setUsers(data);
-          setError('');
-        } else {
-          setError('La respuesta del servidor no es válida');
-          console.error('Respuesta no válida del servidor:', data);
-        }
-      } catch (err) {
-        console.error('Error detallado al cargar usuarios:', err);
-        setError(`Error al cargar usuarios: ${err.message || 'Error desconocido'}`);
-      } finally {
-        setLoading(false);
-      }
-    };
+  // Usando useCallback para evitar recrear la función en cada render
+  const fetchUsers = useCallback(async () => {
+    if (!isAdmin || dataFetched) return;
     
-    if (isAdmin) {
-      fetchUsers();
-    } else {
-      setError('No tienes permisos para ver esta página');
+    try {
+      setLoading(true);
+      const data = await getAllUsers();
+      console.log("Datos de usuarios recibidos:", data);
+      
+      if (Array.isArray(data)) {
+        setUsers(data);
+        setError('');
+      } else {
+        setError('La respuesta del servidor no es válida');
+        console.error('Respuesta no válida del servidor:', data);
+      }
+      
+      // Marcamos que los datos ya han sido obtenidos
+      setDataFetched(true);
+    } catch (err) {
+      console.error('Error detallado al cargar usuarios:', err);
+      setError(`Error al cargar usuarios: ${err.message || 'Error desconocido'}`);
+    } finally {
       setLoading(false);
     }
-  }, [getAllUsers, isAdmin]);
+  }, [getAllUsers, isAdmin, dataFetched]);
+  
+  useEffect(() => {
+    fetchUsers();
+  }, [fetchUsers]);
   
   if (loading) {
     return <LoadingWrapper>Cargando usuarios...</LoadingWrapper>;

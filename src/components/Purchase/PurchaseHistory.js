@@ -198,6 +198,7 @@ const PurchaseHistory = () => {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [localDataFetched, setLocalDataFetched] = useState(false);
   
   const { 
     purchases, 
@@ -206,10 +207,14 @@ const PurchaseHistory = () => {
     fetchPurchases
   } = useTransactions();
   
-  // Cargar compras al montar el componente
+  // Cargar compras solo cuando el componente se monta o cuando se solicita explícitamente,
+  // evitando cargas automáticas en cada render
   useEffect(() => {
-    fetchPurchases();
-  }, [fetchPurchases]);
+    if (!localDataFetched && !purchasesLoading) {
+      fetchPurchases();
+      setLocalDataFetched(true);
+    }
+  }, [fetchPurchases, localDataFetched, purchasesLoading]);
   
   // Función para filtrar compras por rango de fechas
   const handleFilterByDate = () => {

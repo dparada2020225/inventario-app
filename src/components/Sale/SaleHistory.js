@@ -198,6 +198,7 @@ const SaleHistory = () => {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [localDataFetched, setLocalDataFetched] = useState(false);
   
   const { 
     sales, 
@@ -206,10 +207,14 @@ const SaleHistory = () => {
     fetchSales
   } = useTransactions();
   
-  // Cargar ventas al montar el componente
+  // Cargar ventas solo cuando el componente se monta o cuando se solicita explícitamente,
+  // evitando cargas automáticas en cada render
   useEffect(() => {
-    fetchSales();
-  }, [fetchSales]);
+    if (!localDataFetched && !salesLoading) {
+      fetchSales();
+      setLocalDataFetched(true);
+    }
+  }, [fetchSales, localDataFetched, salesLoading]);
   
   // Función para filtrar ventas por rango de fechas
   const handleFilterByDate = () => {

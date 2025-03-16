@@ -1,6 +1,7 @@
 // src/context/TransactionContext.js
 import React, { createContext, useState, useContext, useCallback } from 'react';
 import { purchaseService, saleService } from '../services/api';
+import { useAuth } from './AuthContext';
 
 const TransactionContext = createContext();
 
@@ -17,8 +18,19 @@ export const TransactionProvider = ({ children }) => {
   const [salesLoading, setSalesLoading] = useState(false);
   const [salesError, setSalesError] = useState(null);
   
+  // Flag para controlar si los datos ya fueron cargados
+  const [dataInitialized, setDataInitialized] = useState(false);
+
+  // Obtener información de autenticación
+  const { isAuthenticated, isAdmin } = useAuth();
+  
   // Cargar compras - usando useCallback para evitar recreación de funciones
   const fetchPurchases = useCallback(async (startDate, endDate) => {
+    // No realizar peticiones si el usuario no está autenticado o no es admin
+    if (!isAuthenticated || !isAdmin) {
+      return [];
+    }
+
     try {
       setPurchasesLoading(true);
       setPurchasesError(null);
@@ -39,10 +51,15 @@ export const TransactionProvider = ({ children }) => {
     } finally {
       setPurchasesLoading(false);
     }
-  }, []);
+  }, [isAuthenticated, isAdmin]);
   
   // Cargar ventas
   const fetchSales = useCallback(async (startDate, endDate) => {
+    // No realizar peticiones si el usuario no está autenticado o no es admin
+    if (!isAuthenticated || !isAdmin) {
+      return [];
+    }
+
     try {
       setSalesLoading(true);
       setSalesError(null);
@@ -63,7 +80,7 @@ export const TransactionProvider = ({ children }) => {
     } finally {
       setSalesLoading(false);
     }
-  }, []);
+  }, [isAuthenticated, isAdmin]);
   
   // Crear nueva compra
   const createPurchase = async (purchaseData) => {
@@ -101,6 +118,8 @@ export const TransactionProvider = ({ children }) => {
   
   // Obtener información de una compra específica
   const getPurchase = async (id) => {
+    if (!isAuthenticated || !isAdmin) return null;
+    
     try {
       setPurchasesLoading(true);
       setPurchasesError(null);
@@ -116,6 +135,8 @@ export const TransactionProvider = ({ children }) => {
   
   // Obtener información de una venta específica
   const getSale = async (id) => {
+    if (!isAuthenticated || !isAdmin) return null;
+    
     try {
       setSalesLoading(true);
       setSalesError(null);
@@ -129,15 +150,28 @@ export const TransactionProvider = ({ children }) => {
     }
   };
   
-  // Recargar todos los datos de transacciones
+  // Recargar todos los datos de transacciones solo cuando se necesite
   const refreshAll = useCallback(async () => {
-    await Promise.all([fetchPurchases(), fetchSales()]);
-  }, [fetchPurchases, fetchSales]);
+    if (!isAuthenticated || !isAdmin) return;
+    
+    try {
+      await Promise.all([fetchPurchases(), fetchSales()]);
+      setDataInitialized(true);
+    } catch (error) {
+      console.error('Error al cargar datos de transacciones:', error);
+    }
+  }, [fetchPurchases, fetchSales, isAuthenticated, isAdmin]);
   
-  // Cargar datos iniciales al montar el componente
-  React.useEffect(() => {
-    refreshAll();
-  }, [refreshAll]);
+  // Inicializar datos solo cuando el usuario está autenticado y es admin
+  // y solo cuando se navega a la página de transacciones
+  const initializeData = useCallback(() => {
+    if (isAuthenticated && isAdmin && !dataInitialized) {
+      refreshAll();
+    }
+  }, [isAuthenticated, isAdmin, dataInitialized, refreshAll]);
+  
+  // NO cargar datos automáticamente al montar el componente
+  // Ahora la carga se hará explícitamente cuando se necesite
   
   // Valor del contexto
   const value = {
@@ -157,8 +191,10 @@ export const TransactionProvider = ({ children }) => {
     createSale,
     getSale,
     
-    // Recargar ambos
-    refreshAll
+    // Funciones de utilidad
+    refreshAll,
+    initializeData,
+    dataInitialized
   };
   
   return (

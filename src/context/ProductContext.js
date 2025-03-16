@@ -1,6 +1,7 @@
 // src/context/ProductContext.js
-import React, { createContext, useState, useContext, useEffect } from 'react';
+import React, { createContext, useState, useContext, useEffect, useCallback } from 'react';
 import { productService } from '../services/api';
+import { useAuth } from './AuthContext';
 
 const ProductContext = createContext();
 
@@ -15,32 +16,42 @@ export const ProductProvider = ({ children }) => {
     color: '',
     minPrice: '',
     maxPrice: '',
-    inStock: false, // Nuevo filtro para productos en stock
-    withoutStock: false  // Añadir esta línea
+    inStock: false,
+    withoutStock: false
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [initialized, setInitialized] = useState(false);
+
+  // Obtener información de autenticación
+  const { isAuthenticated } = useAuth();
 
   // Cargar productos desde la API
-  const fetchProducts = async () => {
+  const fetchProducts = useCallback(async () => {
+    // No realizar la carga si no estamos autenticados
+    if (!isAuthenticated) return;
+
     try {
       setLoading(true);
       const data = await productService.getAllProducts();
       setProducts(data);
       applyFilters(data, filters);
       setError(null);
+      setInitialized(true);
     } catch (err) {
       setError('Error al cargar productos');
       console.error(err);
     } finally {
       setLoading(false);
     }
-  };
+  }, [isAuthenticated, filters]);
 
-  // Cargar productos al iniciar
+  // Inicializar datos solo cuando el usuario está autenticado
   useEffect(() => {
-    fetchProducts();
-  }, []);
+    if (isAuthenticated && !initialized) {
+      fetchProducts();
+    }
+  }, [isAuthenticated, initialized, fetchProducts]);
 
   // Aplicar filtros cuando cambien los productos o los filtros
   useEffect(() => {
@@ -48,7 +59,7 @@ export const ProductProvider = ({ children }) => {
   }, [filters, products]);
 
   const applyFilters = (productsList, currentFilters) => {
-    const { searchTerm, category, color, minPrice, maxPrice, inStock, withoutStock  } = currentFilters;
+    const { searchTerm, category, color, minPrice, maxPrice, inStock, withoutStock } = currentFilters;
     
     const filtered = productsList.filter(product => {
       // Filtro por texto de búsqueda
@@ -89,7 +100,7 @@ export const ProductProvider = ({ children }) => {
     setFilteredProducts(filtered);
   };
 
-  // Actualizar productos (ahora principalmente para actualizar la imagen)
+  // Actualizar productos
   const updateProduct = async (updatedProduct) => {
     setLoading(true);
     try {
@@ -119,7 +130,6 @@ export const ProductProvider = ({ children }) => {
     }
   };
 
-
   // Obtener categorías y colores únicos para los filtros
   const categories = [...new Set(products.map(p => p.category))].filter(Boolean).sort();
   const colors = [...new Set(products.map(p => p.color))].filter(Boolean).sort();
@@ -133,6 +143,7 @@ export const ProductProvider = ({ children }) => {
       colors,
       loading,
       error,
+      initialized,
       setFilters,
       updateProduct,
       deleteProduct,

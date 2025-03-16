@@ -1,6 +1,5 @@
-// Actualiza src/context/AuthContext.js
-
-import React, { createContext, useState, useContext, useEffect } from 'react';
+// src/context/AuthContext.js
+import React, { createContext, useState, useContext, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 
@@ -15,7 +14,7 @@ export const AuthProvider = ({ children }) => {
   const [error, setError] = useState(null);
   const navigate = useNavigate();
   
-  const API_URL = process.env.REACT_APP_API_URL || 'https://inventario-server.vercel.app';
+  const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
   // Configurar el token en los headers por defecto
   useEffect(() => {
@@ -121,21 +120,25 @@ export const AuthProvider = ({ children }) => {
     navigate('/login');
   };
 
-  // Obtener todos los usuarios (solo admin)
-  const getAllUsers = async () => {
+  // Obtener todos los usuarios (solo admin) - usando useCallback para memorizar la función
+  const getAllUsers = useCallback(async () => {
     try {
       setLoading(true);
-      console.log("Solicitando lista de usuarios...");
-      console.log("URL API:", `${API_URL}/api/auth/users`);
-      console.log("Token presente:", !!token);
       
+      // Solo iniciar el log una vez para no llenar la consola
+      console.log("Solicitando lista de usuarios...");
+      
+      // Usar el token desde el state para mayor seguridad
       const res = await axios.get(`${API_URL}/api/auth/users`, {
         headers: {
           'Authorization': `Bearer ${token}`
+        },
+        // Añadir timestamp para evitar cacheo del navegador
+        params: {
+          _t: new Date().getTime()
         }
       });
       
-      console.log("Respuesta de la API de usuarios:", res.data);
       return res.data;
     } catch (err) {
       console.error('Error al obtener usuarios:', err);
@@ -157,7 +160,7 @@ export const AuthProvider = ({ children }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [API_URL, token]); // Dependencias mínimas para useCallback
 
   return (
     <AuthContext.Provider value={{

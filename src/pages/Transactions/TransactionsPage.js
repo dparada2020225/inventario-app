@@ -1,8 +1,8 @@
 // src/pages/Transactions/TransactionsPage.js
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { useAuth } from '../../context/AuthContext';
-import { TransactionProvider } from '../../context/TransactionContext';
+import { useTransactions } from '../../context/TransactionContext';
 import CreatePurchaseForm from '../../components/Purchase/CreatePurchaseForm';
 import PurchaseHistory from '../../components/Purchase/PurchaseHistory';
 import CreateSaleForm from '../../components/Sale/CreateSaleForm';
@@ -96,6 +96,14 @@ const TransactionsPage = () => {
   const [activeTab, setActiveTab] = useState('purchases'); // 'purchases' o 'sales'
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const { isAdmin } = useAuth();
+  const { initializeData, dataInitialized } = useTransactions();
+  
+  // Inicializar datos cuando se carga la página, solo si no se han inicializado
+  useEffect(() => {
+    if (isAdmin && !dataInitialized) {
+      initializeData();
+    }
+  }, [isAdmin, dataInitialized, initializeData]);
   
   // Si no es admin, mostrar mensaje de error
   if (!isAdmin) {
@@ -122,57 +130,55 @@ const TransactionsPage = () => {
   };
   
   return (
-    <TransactionProvider>
-      <Container>
-        <PageTitle>Gestión de Transacciones</PageTitle>
-        
-        <TabsContainer>
-          <Tab 
-            active={activeTab === 'purchases'}
-            onClick={() => setActiveTab('purchases')}
-          >
-            Compras
-          </Tab>
-          <Tab 
-            active={activeTab === 'sales'}
-            onClick={() => setActiveTab('sales')}
-          >
-            Ventas
-          </Tab>
-        </TabsContainer>
-        
-        <ActionButton onClick={handleCreateTransaction}>
-          + Registrar {activeTab === 'purchases' ? 'Compra' : 'Venta'}
-        </ActionButton>
-        
-        <TabContent active={activeTab === 'purchases'}>
-          <PurchaseHistory />
-        </TabContent>
-        
-        <TabContent active={activeTab === 'sales'}>
-          <SaleHistory />
-        </TabContent>
-        
-        {/* Modal para crear una nueva transacción */}
-        <Modal
-          isOpen={isCreateModalOpen}
-          title={`Registrar ${activeTab === 'purchases' ? 'Compra' : 'Venta'}`}
-          onClose={handleModalClose}
+    <Container>
+      <PageTitle>Gestión de Transacciones</PageTitle>
+      
+      <TabsContainer>
+        <Tab 
+          active={activeTab === 'purchases'}
+          onClick={() => setActiveTab('purchases')}
         >
-          {activeTab === 'purchases' ? (
-            <CreatePurchaseForm 
-              onSuccess={handleTransactionSuccess} 
-              onCancel={handleModalClose} 
-            />
-          ) : (
-            <CreateSaleForm 
-              onSuccess={handleTransactionSuccess} 
-              onCancel={handleModalClose} 
-            />
-          )}
-        </Modal>
-      </Container>
-    </TransactionProvider>
+          Compras
+        </Tab>
+        <Tab 
+          active={activeTab === 'sales'}
+          onClick={() => setActiveTab('sales')}
+        >
+          Ventas
+        </Tab>
+      </TabsContainer>
+      
+      <ActionButton onClick={handleCreateTransaction}>
+        + Registrar {activeTab === 'purchases' ? 'Compra' : 'Venta'}
+      </ActionButton>
+      
+      <TabContent active={activeTab === 'purchases'}>
+        <PurchaseHistory />
+      </TabContent>
+      
+      <TabContent active={activeTab === 'sales'}>
+        <SaleHistory />
+      </TabContent>
+      
+      {/* Modal para crear una nueva transacción */}
+      <Modal
+        isOpen={isCreateModalOpen}
+        title={`Registrar ${activeTab === 'purchases' ? 'Compra' : 'Venta'}`}
+        onClose={handleModalClose}
+      >
+        {activeTab === 'purchases' ? (
+          <CreatePurchaseForm 
+            onSuccess={handleTransactionSuccess} 
+            onCancel={handleModalClose} 
+          />
+        ) : (
+          <CreateSaleForm 
+            onSuccess={handleTransactionSuccess} 
+            onCancel={handleModalClose} 
+          />
+        )}
+      </Modal>
+    </Container>
   );
 };
 
