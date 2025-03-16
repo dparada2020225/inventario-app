@@ -74,22 +74,6 @@ const Button = styled.button`
   }
 `;
 
-// Para botones secundarios o de acción menos importante
-const SecondaryButton = styled.button`
-  background-color: transparent;
-  color: ${props => props.danger ? '#f44336' : '#96ff00'};
-  border: 2px solid ${props => props.danger ? '#f44336' : '#96ff00'};
-  padding: 8px 14px;
-  border-radius: 6px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
-  
-  &:hover {
-    background-color: ${props => props.danger ? 'rgba(244, 67, 54, 0.1)' : 'rgba(150, 255, 0, 0.1)'};
-  }
-`;
-
 const Checkbox = styled.div`
   display: flex;
   align-items: center;
@@ -107,10 +91,18 @@ const Checkbox = styled.div`
 
 const SearchFilters = ({ filters, setFilters, categories, colors }) => {
   const handleInputChange = (e) => {
-    const { name, value } = e.target;
+    const { name, value, type, checked } = e.target;
     setFilters({
       ...filters,
-      [name]: value
+      [name]: type === 'checkbox' ? checked : value
+    });
+  };
+
+  // Función específica para manejar el cambio del color
+  const handleColorChange = (colorValue) => {
+    setFilters({
+      ...filters,
+      color: colorValue
     });
   };
 
@@ -160,8 +152,8 @@ const SearchFilters = ({ filters, setFilters, categories, colors }) => {
           <Label htmlFor="color">Color:</Label>
           <ColorSelector
             value={filters.color || ''}
-            onChange={(value) => handleInputChange({ target: { name: 'color', value } })}
-            availableColors={colors} // Usa los colores que ya vienen como prop
+            onChange={handleColorChange}
+            availableColors={colors}
             placeholder="Todos los colores"
           />
         </FilterItem>
@@ -200,14 +192,7 @@ const SearchFilters = ({ filters, setFilters, categories, colors }) => {
               id="inStock"
               name="inStock"
               checked={filters.inStock || false}
-              onChange={(e) => handleInputChange({ 
-                target: { 
-                  name: 'inStock', 
-                  value: e.target.checked,
-                  type: 'checkbox',
-                  checked: e.target.checked
-                } 
-              })}
+              onChange={handleInputChange}
             />
             <label htmlFor="inStock">Solo productos con stock</label>
           </Checkbox>
@@ -217,14 +202,7 @@ const SearchFilters = ({ filters, setFilters, categories, colors }) => {
               id="withoutStock"
               name="withoutStock"
               checked={filters.withoutStock || false}
-              onChange={(e) => handleInputChange({ 
-                target: { 
-                  name: 'withoutStock', 
-                  value: e.target.checked,
-                  type: 'checkbox',
-                  checked: e.target.checked
-                } 
-              })}
+              onChange={handleInputChange}
             />
             <label htmlFor="withoutStock">Solo productos sin stock</label>
           </Checkbox>
